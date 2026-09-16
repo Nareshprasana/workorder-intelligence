@@ -26,6 +26,9 @@ export async function GET(request) {
       inProgress,
       completed,
       totalIncidents,
+      openIncidents,
+      criticalIncidents,
+      incidentStatusRows,
       recentIncidents,
     ] = await Promise.all([
       prisma.workOrder.count(),
@@ -55,6 +58,23 @@ export async function GET(request) {
       }),
 
       prisma.incident.count(),
+
+      prisma.incident.count({
+        where: {
+          status: { not: "COMPLETED" },
+        },
+      }),
+
+      prisma.incident.count({
+        where: {
+          severity: "CRITICAL",
+        },
+      }),
+
+      prisma.incident.groupBy({
+        by: ["status"],
+        _count: { status: true },
+      }),
 
       prisma.incident.findMany({
         orderBy: {
@@ -105,8 +125,21 @@ export async function GET(request) {
 
     const totalPages = Math.max(1, Math.ceil(totalIncidents / limit));
 
-    // Clamp page if beyond totalPages (return empty but correct pagination)
-    // Keep requested page in response for UI consistency
+    const statusCounts = {
+      NEW: 0,
+      ANALYZING: 0,
+      NEEDS_INFORMATION: 0,
+      READY: 0,
+      ASSIGNED: 0,
+      IN_PROGRESS: 0,
+      COMPLETED: 0,
+      REJECTED: 0,
+    };
+    for (const row of incidentStatusRows) {
+      statusCounts[row.status] = row._count.status;
+    }
+
+    const activeWorkOrders = pending + assigned + inProgress;
 
     return Response.json({
       total,
@@ -114,6 +147,11 @@ export async function GET(request) {
       assigned,
       inProgress,
       completed,
+      activeWorkOrders,
+      openIncidents,
+      criticalIncidents,
+      incidentStatusCounts: statusCounts,
+      totalIncidents,
       recentIncidents,
       pagination: {
         page,

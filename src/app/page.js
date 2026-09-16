@@ -1,602 +1,11 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect */
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-export default function Home() {
-  const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, limit: 5, total: 0, totalPages: 1 });
-  const [creatingId, setCreatingId] = useState(null);
-  const [actionFeedback, setActionFeedback] = useState("");
-
-  const [workers, setWorkers] = useState([]);
-  const [workerCounts, setWorkerCounts] = useState({ available: 0, busy: 0, offline: 0, total: 0 });
-  const [workersLoading, setWorkersLoading] = useState(true);
-  const [workersError, setWorkersError] = useState(null);
-
-  const limit = 5;
-
-  async function loadDashboard(targetPage) {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(`/api/dashboard?page=${targetPage}&limit=${limit}`);
-      if (!response.ok) {
-        throw new Error("Failed to load dashboard");
-      }
-      const data = await response.json();
-      setDashboard(data);
-      if (data.pagination) {
-        setPagination(data.pagination);
-      }
-    } catch (err) {
-      setError(err.message || "Failed to load dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadWorkers() {
-    try {
-      setWorkersLoading(true);
-      setWorkersError(null);
-      const res = await fetch("/api/workers");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load workers");
-      setWorkers(data.workers || []);
-      if (data.counts) setWorkerCounts(data.counts);
-    } catch (err) {
-      setWorkersError(err.message);
-    } finally {
-      setWorkersLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadDashboard(page);
-  }, [page]);
-
-  useEffect(() => {
-    loadWorkers();
-  }, []);
-
-  const stats = dashboard || {
-    total: 0,
-    pending: 0,
-    assigned: 0,
-    inProgress: 0,
-    completed: 0,
-  };
-
-  const recentIncidents = dashboard?.recentIncidents || [];
-
-  const analyzedCount = recentIncidents.filter((i) => i.status !== "NEW").length;
-  const needsInfoCount = recentIncidents.filter((i) => i.status === "NEEDS_INFORMATION").length;
-  const readyCount = recentIncidents.filter((i) => i.status === "READY").length;
-
-  async function handleCreateWorkOrder(incidentId) {
-    setCreatingId(incidentId);
-    setActionFeedback("");
-    try {
-      const res = await fetch(`/api/incidents/${incidentId}/work-order`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create work order");
-      if (data.worker) {
-        setActionFeedback(`Work order assigned to ${data.worker.name} (SLA ${data.slaHours}h)`);
-      } else {
-        setActionFeedback("Work order created — pending worker assignment");
-      }
-      await loadDashboard(page);
-      await loadWorkers();
-    } catch (err) {
-      setActionFeedback(err.message);
-    } finally {
-      setCreatingId(null);
-    }
-  }
-
-  function goToPage(newPage) {
-    if (newPage < 1 || newPage > pagination.totalPages) return;
-    setPage(newPage);
-  }
-
-  return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              WorkOrder Intelligence
-            </h1>
-
-            <p className="mt-2 text-sm text-slate-400">
-              AI-powered maintenance triage and worker dispatch
-            </p>
-          </div>
-
-          <Link
-            href="/complaints/new"
-            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
-          >
-            + New Complaint
-          </Link>
-        </div>
-
-        {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <StatCard title="Total" value={stats.total} />
-          <StatCard title="Pending" value={stats.pending} />
-          <StatCard title="Assigned" value={stats.assigned} />
-          <StatCard title="In Progress" value={stats.inProgress} />
-          <StatCard title="Completed" value={stats.completed} />
-        </div>
-
-        {/* Worker Availability */}
-        <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold">Worker Availability</h2>
-              <p className="text-sm text-slate-400">
-                Real worker database · Deterministic assignment requires AVAILABLE
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Link
-                href="/workers"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
-              >
-                View all
-              </Link>
-              <Link
-                href="/workers/new"
-                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
-              >
-                + Add Worker
-              </Link>
-            </div>
-          </div>
-
-          {/* Summary cards */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs text-slate-400">Total Workers</p>
-              <p className="mt-1 text-2xl font-bold">{workersLoading ? "—" : workerCounts.total}</p>
-            </div>
-            <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-4">
-              <p className="text-xs text-emerald-300/80">Available</p>
-              <p className="mt-1 text-2xl font-bold text-emerald-400">{workersLoading ? "—" : workerCounts.available}</p>
-            </div>
-            <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-4">
-              <p className="text-xs text-amber-300/80">Busy</p>
-              <p className="mt-1 text-2xl font-bold text-amber-400">{workersLoading ? "—" : workerCounts.busy}</p>
-            </div>
-            <div className="rounded-xl border border-slate-700 bg-slate-800/40 p-4">
-              <p className="text-xs text-slate-400">Offline</p>
-              <p className="mt-1 text-2xl font-bold text-slate-300">{workersLoading ? "—" : workerCounts.offline}</p>
-            </div>
-          </div>
-
-          {/* Worker list */}
-          <div className="mt-6">
-            {workersLoading && (
-              <div className="rounded-lg border border-slate-800 bg-slate-950 p-6 text-center">
-                <p className="text-sm text-slate-400">Loading workers...</p>
-              </div>
-            )}
-            {!workersLoading && workersError && (
-              <div className="rounded-lg border border-red-900/50 bg-red-950/30 p-4 text-center">
-                <p className="text-sm text-red-300">{workersError}</p>
-              </div>
-            )}
-            {!workersLoading && !workersError && workers.length === 0 && (
-              <div className="rounded-lg border border-dashed border-slate-700 p-8 text-center">
-                <p className="text-sm text-slate-400">No workers yet.</p>
-                <Link href="/workers/new" className="mt-3 inline-block text-sm text-slate-300 hover:text-white">
-                  Add first worker →
-                </Link>
-              </div>
-            )}
-            {!workersLoading && !workersError && workers.length > 0 && (
-              <div className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-800 bg-slate-900/50 text-xs text-slate-400">
-                      <tr>
-                        <th className="px-4 py-2.5 font-medium">Name</th>
-                        <th className="px-4 py-2.5 font-medium">Skills</th>
-                        <th className="px-4 py-2.5 font-medium">Location</th>
-                        <th className="px-4 py-2.5 font-medium">Availability</th>
-                        <th className="px-4 py-2.5 font-medium text-center">Assigned</th>
-                        <th className="px-4 py-2.5 font-medium text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {workers.slice(0, 8).map((w) => (
-                        <tr key={w.id} className="hover:bg-slate-900/50">
-                          <td className="px-4 py-2.5 font-medium text-white">{w.name}</td>
-                          <td className="px-4 py-2.5 text-slate-400">{w.skills}</td>
-                          <td className="px-4 py-2.5 text-slate-400">{w.location}</td>
-                          <td className="px-4 py-2.5">
-                            <WorkerStatusBadge status={w.status} />
-                          </td>
-                          <td className="px-4 py-2.5 text-center text-slate-300">{w.workOrderCount}</td>
-                          <td className="px-4 py-2.5 text-right">
-                            <Link
-                              href={`/workers/${w.id}`}
-                              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-slate-800"
-                            >
-                              View
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {workers.length > 8 && (
-                  <div className="border-t border-slate-800 bg-slate-900/30 px-4 py-2.5 text-center">
-                    <Link href="/workers" className="text-xs text-slate-400 hover:text-white">
-                      View all {workers.length} workers →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Main content */}
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          {/* Recent Incidents */}
-          <section className="rounded-xl border border-slate-800 bg-slate-900 p-6 lg:col-span-2">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Recent Incidents</h2>
-
-                <p className="text-sm text-slate-400">
-                  Latest maintenance activity
-                  {!loading && !error && pagination.total > 0 && (
-                    <span className="text-slate-500"> · Page {pagination.page} of {pagination.totalPages}</span>
-                  )}
-                </p>
-              </div>
-
-              <Link
-                href="/complaints/new"
-                className="text-sm text-slate-300 hover:text-white"
-              >
-                New complaint
-              </Link>
-            </div>
-
-            {actionFeedback && (
-              <div className="mb-4 rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-300">
-                {actionFeedback}
-              </div>
-            )}
-
-            {loading && (
-              <div className="rounded-lg border border-slate-800 bg-slate-950 p-10 text-center">
-                <p className="text-sm text-slate-400">Loading incidents...</p>
-              </div>
-            )}
-
-            {!loading && error && (
-              <div className="rounded-lg border border-red-900/50 bg-red-950/30 p-6 text-center">
-                <p className="text-sm text-red-300">{error}</p>
-                <p className="mt-1 text-xs text-red-400/70">
-                  Please refresh the page to retry.
-                </p>
-              </div>
-            )}
-
-            {!loading && !error && recentIncidents.length === 0 && (
-              <div className="rounded-lg border border-dashed border-slate-700 p-10 text-center">
-                <p className="text-slate-400">No maintenance incidents yet.</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Create a complaint to start the AI workflow.
-                </p>
-                <Link
-                  href="/complaints/new"
-                  className="mt-4 inline-block rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
-                >
-                  Create first complaint
-                </Link>
-              </div>
-            )}
-
-            {!loading && !error && recentIncidents.length > 0 && (
-              <>
-                <div className="space-y-3">
-                  {recentIncidents.map((incident) => (
-                    <div
-                      key={incident.id}
-                      className="rounded-lg border border-slate-800 bg-slate-950 p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="max-w-[60%] text-sm font-medium leading-5">
-                          {incident.description}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          <StatusBadge status={incident.status} />
-                          {incident.severity && (
-                            <SeverityBadge severity={incident.severity} />
-                          )}
-                          {incident.category && (
-                            <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-300">
-                              {incident.category}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                        <span>{incident.location}</span>
-                        {incident.asset?.assetCode && (
-                          <span className="text-slate-400">
-                            Asset: {incident.asset.assetCode}
-                          </span>
-                        )}
-                        {incident.asset?.name && (
-                          <span>{incident.asset.name}</span>
-                        )}
-                        <span>
-                          {new Date(incident.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-
-                      {incident.issue && (
-                        <p className="mt-2 text-xs text-slate-400">
-                          <span className="text-slate-500">Issue:</span> {incident.issue}
-                        </p>
-                      )}
-
-                      {incident.recommendedAction && (
-                        <p className="mt-1 text-xs text-slate-400">
-                          <span className="text-slate-500">Recommended:</span>{" "}
-                          {incident.recommendedAction}
-                        </p>
-                      )}
-
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                        {incident.confidence != null && (
-                          <span className="text-slate-400">
-                            Confidence: {Math.round(incident.confidence * 100)}%
-                          </span>
-                        )}
-                        {incident.asset?.category && (
-                          <span className="text-slate-500">
-                            {incident.asset.category} · {incident.asset.location}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Work Order info compact */}
-                      {incident.workOrder && (
-                        <div className="mt-3 rounded-md border border-slate-800 bg-slate-900/60 px-3 py-2">
-                          <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="font-medium text-slate-300">Work Order</span>
-                            <span className={`rounded-full border px-2 py-0.5 text-xs ${workOrderStatusStyle(incident.workOrder.status)}`}>
-                              {incident.workOrder.status}
-                            </span>
-                            <span className="text-slate-400">
-                              Priority: {incident.workOrder.priority} · SLA: {incident.workOrder.slaHours}h
-                            </span>
-                            {incident.workOrder.worker && (
-                              <span className="text-slate-300">
-                                Assigned to{" "}
-                                <Link href={`/workers/${incident.workOrder.worker.id}`} className="underline hover:text-white">
-                                  {incident.workOrder.worker.name}
-                                </Link>
-                              </span>
-                            )}
-                            {!incident.workOrder.worker && (
-                              <span className="text-amber-300">Pending worker assignment</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Create Work Order action for READY */}
-                      {incident.status === "READY" && !incident.workOrder && (
-                        <div className="mt-3">
-                          <button
-                            onClick={() => handleCreateWorkOrder(incident.id)}
-                            disabled={creatingId === incident.id}
-                            className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-200 disabled:opacity-50"
-                          >
-                            {creatingId === incident.id ? "Creating..." : "Create Work Order"}
-                          </button>
-                        </div>
-                      )}
-
-                      {incident.status === "READY" && incident.workOrder && incident.workOrder.worker && (
-                        <p className="mt-2 text-xs text-emerald-400">
-                          Assigned to {incident.workOrder.worker.name}
-                        </p>
-                      )}
-                      {incident.status === "READY" && incident.workOrder && !incident.workOrder.worker && (
-                        <p className="mt-2 text-xs text-amber-300">Pending worker assignment</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                <div className="mt-6 flex items-center justify-between border-t border-slate-800 pt-4">
-                  <button
-                    onClick={() => goToPage(page - 1)}
-                    disabled={page <= 1 || loading}
-                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => goToPage(p)}
-                        disabled={loading}
-                        className={`h-7 w-7 rounded-md text-xs font-medium ${
-                          p === pagination.page
-                            ? "bg-white text-slate-900"
-                            : "border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800"
-                        } disabled:opacity-50`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => goToPage(page + 1)}
-                    disabled={page >= pagination.totalPages || loading}
-                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              </>
-            )}
-          </section>
-
-          {/* AI Activity */}
-          <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-            <h2 className="text-lg font-semibold">AI Activity</h2>
-
-            <p className="mt-1 text-sm text-slate-400">
-              Recent intelligence decisions
-            </p>
-
-            <div className="mt-6 space-y-4">
-              <Activity
-                title="AI Intake"
-                description={
-                  loading
-                    ? "Loading..."
-                    : error
-                      ? "Unable to load activity"
-                      : recentIncidents.length === 0
-                        ? "Waiting for first complaint"
-                        : analyzedCount === 0
-                          ? "No incidents analyzed yet"
-                          : `${analyzedCount} of ${recentIncidents.length} incidents analyzed`
-                }
-              />
-
-              <Activity
-                title="Clarification"
-                description={
-                  loading
-                    ? "Loading..."
-                    : error
-                      ? "Unable to load activity"
-                      : needsInfoCount === 0
-                        ? recentIncidents.length === 0
-                          ? "No clarifications needed yet"
-                          : "No incidents needing information"
-                        : `${needsInfoCount} incident${needsInfoCount > 1 ? "s" : ""} need clarification`
-                }
-              />
-
-              <Activity
-                title="Ready"
-                description={
-                  loading
-                    ? "Loading..."
-                    : error
-                      ? "Unable to load activity"
-                      : readyCount === 0
-                        ? recentIncidents.length === 0
-                          ? "No incidents ready yet"
-                          : "No incidents ready for work order"
-                        : `${readyCount} incident${readyCount > 1 ? "s" : ""} ready for work order`
-                }
-              />
-            </div>
-          </section>
-        </div>
-
-        {/* Demo workflow */}
-        <section className="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold">Maintenance Workflow</h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Implemented: Complaint → AI Analysis
-                <span className="text-slate-500"> · Planned: Work Order → Dispatch → Completion</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-3 md:grid-cols-5">
-            {[
-              { label: "Complaint", state: "Live" },
-              { label: "AI Analysis", state: "Live" },
-              { label: "Work Order", state: "Planned" },
-              { label: "Worker Dispatch", state: "Planned" },
-              { label: "Completion", state: "Planned" },
-            ].map((step, index) => (
-              <div
-                key={step.label}
-                className={`rounded-lg border p-4 ${
-                  step.state === "Live"
-                    ? "border-emerald-900/50 bg-slate-950"
-                    : "border-dashed border-slate-700 bg-slate-950/50 opacity-75"
-                }`}
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs text-slate-500">
-                    STEP {index + 1}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide ${
-                      step.state === "Live"
-                        ? "bg-emerald-950 text-emerald-300 border border-emerald-900"
-                        : "bg-slate-800 text-slate-400 border border-slate-700"
-                    }`}
-                  >
-                    {step.state.toUpperCase()}
-                  </span>
-                </div>
-
-                <div className="font-medium">{step.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function StatCard({ title, value }) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-      <p className="text-sm text-slate-400">{title}</p>
-
-      <p className="mt-2 text-3xl font-bold">{value}</p>
-    </div>
-  );
-}
-
-function Activity({ title, description }) {
-  return (
-    <div className="border-l-2 border-slate-700 pl-4">
-      <p className="text-sm font-medium">{title}</p>
-
-      <p className="mt-1 text-xs text-slate-500">{description}</p>
-    </div>
-  );
-}
+import Reveal from "../components/dashboard/Reveal";
+import MetricCard from "../components/dashboard/MetricCard";
+import ProgressBar from "../components/dashboard/ProgressBar";
+import { ThreeDButton } from "../components/dashboard/ThreeDButton";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -610,13 +19,8 @@ function StatusBadge({ status }) {
     REJECTED: "bg-red-950 text-red-300 border-red-900",
   };
   const cls = styles[status] || "bg-slate-800 text-slate-300 border-slate-700";
-  return (
-    <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>
-      {status}
-    </span>
-  );
+  return <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
 }
-
 function SeverityBadge({ severity }) {
   const styles = {
     LOW: "bg-slate-800 text-slate-300 border-slate-700",
@@ -625,31 +29,332 @@ function SeverityBadge({ severity }) {
     CRITICAL: "bg-red-950 text-red-300 border-red-900",
   };
   const cls = styles[severity] || "bg-slate-800 text-slate-300 border-slate-700";
-  return (
-    <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>
-      {severity}
-    </span>
-  );
+  return <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>{severity}</span>;
 }
 
-function WorkerStatusBadge({ status }) {
-  const map = {
-    AVAILABLE: "border-emerald-900 bg-emerald-950 text-emerald-300",
-    BUSY: "border-amber-900 bg-amber-950 text-amber-300",
-    OFFLINE: "border-slate-700 bg-slate-800 text-slate-300",
-  };
-  const cls = map[status] || "border-slate-700 bg-slate-800 text-slate-300";
-  return (
-    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${cls}`}>
-      {status}
-    </span>
-  );
-}
+export default function OverviewPage() {
+  const [dashboard, setDashboard] = useState(null);
+  const [workersData, setWorkersData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionFeedback, setActionFeedback] = useState("");
+  const [creatingId, setCreatingId] = useState(null);
 
-function workOrderStatusStyle(status) {
-  if (status === "ASSIGNED") return "bg-blue-950 text-blue-300 border-blue-900";
-  if (status === "PENDING") return "bg-amber-950 text-amber-300 border-amber-900";
-  if (status === "IN_PROGRESS") return "bg-blue-950 text-blue-300 border-blue-900";
-  if (status === "COMPLETED") return "bg-emerald-950 text-emerald-300 border-emerald-900";
-  return "bg-slate-800 text-slate-300 border-slate-700";
+  useEffect(() => {
+    async function load() {
+      try {
+        const [dashRes, workersRes] = await Promise.all([
+          fetch("/api/dashboard?page=1&limit=5"),
+          fetch("/api/workers"),
+        ]);
+        const dashData = await dashRes.json();
+        const workersJson = await workersRes.json();
+        if (dashRes.ok) setDashboard(dashData);
+        if (workersRes.ok) setWorkersData(workersJson);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const incidentCounts = dashboard?.incidentStatusCounts || {};
+  const totalIncidents = dashboard?.totalIncidents || 0;
+  const openIncidents = dashboard?.openIncidents || 0;
+  const criticalIncidents = dashboard?.criticalIncidents || 0;
+  const activeWorkOrders = dashboard?.activeWorkOrders ?? ((dashboard?.pending ?? 0) + (dashboard?.assigned ?? 0) + (dashboard?.inProgress ?? 0));
+  const availableWorkers = workersData?.counts?.available ?? 0;
+
+  const recentIncidents = dashboard?.recentIncidents || [];
+  const workerCounts = workersData?.counts || { available: 0, busy: 0, offline: 0, total: 0 };
+  const workers = workersData?.workers || [];
+
+  async function handleCreateWorkOrder(id) {
+    setCreatingId(id);
+    setActionFeedback("");
+    try {
+      const res = await fetch(`/api/incidents/${id}/work-order`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setActionFeedback(data.worker ? `Assigned to ${data.worker.name}` : "Pending assignment");
+      const dashRes = await fetch("/api/dashboard?page=1&limit=5");
+      const dashData = await dashRes.json();
+      if (dashRes.ok) setDashboard(dashData);
+      const wRes = await fetch("/api/workers");
+      const wData = await wRes.json();
+      if (wRes.ok) setWorkersData(wData);
+    } catch (e) {
+      setActionFeedback(e.message);
+    } finally {
+      setCreatingId(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-24 animate-pulse rounded-xl bg-slate-900"></div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 animate-pulse rounded-xl bg-slate-900"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Greeting */}
+      <Reveal>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Maintenance Operations</h1>
+            <p className="mt-1 text-sm text-slate-400">Real-time intelligence across incidents, work orders and field operations.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-full border border-emerald-900/50 bg-emerald-950/30 px-3 py-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-30"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-medium text-emerald-300">AI Engine Online</span>
+            </div>
+            <ThreeDButton href="/complaints/new" variant="primary">+ New Complaint</ThreeDButton>
+          </div>
+        </div>
+      </Reveal>
+
+      {/* Summary Metrics */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Reveal delay={50}>
+          <MetricCard
+            label="Open Incidents"
+            value={openIncidents}
+            sublabel={`${totalIncidents} total incidents`}
+            accent="amber"
+            icon={<span className="text-sm">◈</span>}
+          />
+        </Reveal>
+        <Reveal delay={100}>
+          <MetricCard
+            label="Critical Incidents"
+            value={criticalIncidents}
+            sublabel="Requires immediate attention"
+            accent="red"
+            icon={<span className="text-sm">⚠</span>}
+          />
+        </Reveal>
+        <Reveal delay={150}>
+          <MetricCard
+            label="Active Work Orders"
+            value={activeWorkOrders}
+            sublabel={`${dashboard?.pending || 0} pending · ${dashboard?.assigned || 0} assigned`}
+            accent="blue"
+            icon={<span className="text-sm">⧉</span>}
+          />
+        </Reveal>
+        <Reveal delay={200}>
+          <MetricCard
+            label="Available Workers"
+            value={availableWorkers}
+            sublabel={`${workerCounts.total} total workers`}
+            accent="emerald"
+            icon={<span className="text-sm">◎</span>}
+          />
+        </Reveal>
+      </div>
+
+      {/* Operations Overview */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Reveal>
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-700">
+            <h2 className="text-sm font-semibold text-white">Incident Activity</h2>
+            <p className="text-xs text-slate-500">Distribution by status</p>
+            <div className="mt-5 space-y-3">
+              {[
+                { label: "NEW", count: incidentCounts.NEW || 0, color: "slate" },
+                { label: "ANALYZING", count: incidentCounts.ANALYZING || 0, color: "amber" },
+                { label: "NEEDS INFORMATION", count: incidentCounts.NEEDS_INFORMATION || 0, color: "amber" },
+                { label: "READY", count: incidentCounts.READY || 0, color: "emerald" },
+                { label: "ASSIGNED", count: incidentCounts.ASSIGNED || 0, color: "blue" },
+                { label: "IN PROGRESS", count: incidentCounts.IN_PROGRESS || 0, color: "blue" },
+                { label: "COMPLETED", count: incidentCounts.COMPLETED || 0, color: "emerald" },
+              ].map((item) => {
+                const percent = totalIncidents ? Math.round((item.count / totalIncidents) * 100) : 0;
+                return (
+                  <div key={item.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-300">{item.label}</span>
+                      <span className="text-slate-500">{item.count} · {percent}%</span>
+                    </div>
+                    <ProgressBar value={percent} color={item.color} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-700">
+            <h2 className="text-sm font-semibold text-white">Worker Availability</h2>
+            <p className="text-xs text-slate-500">Real worker database</p>
+            <div className="mt-5 space-y-4">
+              {[
+                { label: "AVAILABLE", count: workerCounts.available, total: workerCounts.total, color: "emerald" },
+                { label: "BUSY", count: workerCounts.busy, total: workerCounts.total, color: "amber" },
+                { label: "OFFLINE", count: workerCounts.offline, total: workerCounts.total, color: "slate" },
+              ].map((item) => {
+                const percent = item.total ? Math.round((item.count / item.total) * 100) : 0;
+                return (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-2 font-medium text-slate-300">
+                        <span className={`h-2 w-2 rounded-full ${item.color === "emerald" ? "bg-emerald-500" : item.color === "amber" ? "bg-amber-500" : "bg-slate-500"}`}></span>
+                        {item.label}
+                      </span>
+                      <span className="text-slate-500">{item.count} · {percent}%</span>
+                    </div>
+                    <div className="mt-1.5">
+                      <ProgressBar value={percent} color={item.color} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 flex gap-2">
+              <ThreeDButton href="/workers" variant="secondary" className="flex-1 justify-center">View Workers</ThreeDButton>
+              <ThreeDButton href="/workers/new" variant="primary" className="flex-1 justify-center">Add Worker</ThreeDButton>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+
+      {/* AI → Operations workflow */}
+      <Reveal>
+        <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold tracking-widest text-slate-500">AI → OPERATIONS FLOW</p>
+            <p className="text-xs text-slate-600">AI understands · Rules decide · Workers execute</p>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+            {["AI Intelligence", "Validation", "Deterministic Rules", "Worker Assignment", "Work Order"].map((step, i) => (
+              <div key={step} className="flex items-center gap-2">
+                <span className={`rounded-full border px-3 py-1 font-medium ${i < 2 ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : "border-slate-700 bg-slate-800 text-slate-300"}`}>
+                  {step}
+                </span>
+                {i < 4 && <span className="text-slate-600">→</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Reveal>
+
+      {/* Recent Incidents & Active Work Orders */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Reveal className="lg:col-span-2">
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-white">Recent Incidents</h2>
+                <p className="text-xs text-slate-500">Latest 5 incidents</p>
+              </div>
+              <Link href="/incidents" className="text-xs font-medium text-slate-300 hover:text-white transition-colors">
+                View all →
+              </Link>
+            </div>
+            {actionFeedback && (
+              <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950 p-2 text-xs text-slate-300">
+                {actionFeedback}
+              </div>
+            )}
+            <div className="mt-4 space-y-2">
+              {recentIncidents.map((incident) => (
+                <div key={incident.id} className="group flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3 transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-900">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-white">{incident.description}</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {incident.category && <span className="rounded-full border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-xs text-slate-400">{incident.category}</span>}
+                      {incident.severity && <SeverityBadge severity={incident.severity} />}
+                      <StatusBadge status={incident.status} />
+                    </div>
+                    <p className="mt-1 truncate text-xs text-slate-500">{incident.location} · {new Date(incident.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {incident.status === "READY" && !incident.workOrder ? (
+                      <button
+                        onClick={() => handleCreateWorkOrder(incident.id)}
+                        disabled={creatingId === incident.id}
+                        className="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-slate-900 hover:bg-slate-200 disabled:opacity-50 shadow-[0_2px_0_0_rgb(15_23_42)] hover:-translate-y-0.5 active:translate-y-0 transition-all"
+                      >
+                        {creatingId === incident.id ? "..." : "Create"}
+                      </button>
+                    ) : incident.workOrder?.worker ? (
+                      <span className="text-xs text-emerald-400">{incident.workOrder.worker.name}</span>
+                    ) : incident.workOrder ? (
+                      <span className="text-xs text-amber-400">Pending</span>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+              {recentIncidents.length === 0 && <p className="py-6 text-center text-sm text-slate-500">No incidents yet.</p>}
+            </div>
+          </div>
+        </Reveal>
+
+        <div className="space-y-6">
+          <Reveal>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-white">Active Work Orders</h2>
+                  <p className="text-xs text-slate-500">{dashboard?.activeWorkOrders || 0} active</p>
+                </div>
+                <Link href="/work-orders" className="text-xs font-medium text-slate-300 hover:text-white">View all →</Link>
+              </div>
+              <div className="mt-4 space-y-2">
+                {(dashboard?.recentIncidents || []).filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).slice(0, 3).map((incident) => (
+                  <div key={incident.workOrder.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3 transition hover:border-slate-700">
+                    <p className="truncate text-sm font-medium text-white">{incident.workOrder.worker?.name || "Unassigned"}</p>
+                    <p className="truncate text-xs text-slate-400">{incident.issue || incident.description}</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className={`rounded-full border px-1.5 py-0.5 text-xs ${incident.workOrder.status === "IN_PROGRESS" ? "border-blue-900 bg-blue-950 text-blue-300" : incident.workOrder.status === "ASSIGNED" ? "border-sky-900 bg-sky-950 text-sky-300" : "border-amber-900 bg-amber-950 text-amber-300"}`}>{incident.workOrder.status}</span>
+                      <span className="text-xs text-slate-500">SLA {incident.workOrder.slaHours}h · {incident.workOrder.priority}</span>
+                    </div>
+                  </div>
+                ))}
+                {(!dashboard || (dashboard.recentIncidents || []).filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).length === 0) && (
+                  <p className="py-4 text-center text-xs text-slate-500">No active work orders.</p>
+                )}
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={60}>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+              <h2 className="text-sm font-semibold text-white">AI Intelligence</h2>
+              <p className="text-xs text-slate-500">Recent analysis</p>
+              <div className="mt-4 space-y-3">
+                {recentIncidents.slice(0, 4).map((inc) => (
+                  <div key={`ai-${inc.id}`} className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
+                    <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${inc.status === "READY" ? "bg-emerald-500" : inc.status === "NEEDS_INFORMATION" ? "bg-amber-500" : inc.severity === "CRITICAL" ? "bg-red-500" : "bg-sky-500"}`}></div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-slate-200 truncate">
+                        {inc.status === "READY" ? "Work order ready" : inc.status === "NEEDS_INFORMATION" ? "Missing information detected" : inc.severity === "CRITICAL" ? "Critical incident detected" : inc.severity === "HIGH" ? "High severity identified" : "Complaint analyzed"}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">{inc.issue || inc.category} · {inc.confidence ? `${Math.round(inc.confidence*100)}% confidence` : "analyzed"}</p>
+                    </div>
+                  </div>
+                ))}
+                {recentIncidents.length === 0 && <p className="py-4 text-center text-xs text-slate-500">No analysis yet.</p>}
+                <Link href="/ai" className="block text-center text-xs font-medium text-slate-400 hover:text-white">View AI analysis →</Link>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </div>
+  );
 }

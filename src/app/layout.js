@@ -1,4 +1,5 @@
 import "./globals.css";
+import DashboardShell from "../components/dashboard/DashboardShell";
 
 export const metadata = {
   title: "WorkOrder Intelligence",
@@ -8,7 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full font-sans bg-slate-950">
+        <DashboardShell>{children}</DashboardShell>
+      </body>
     </html>
   );
 }
