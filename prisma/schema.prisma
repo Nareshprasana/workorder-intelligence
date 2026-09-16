@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum IncidentStatus {
+  NEW
+  ANALYZING
+  NEEDS_INFORMATION
+  READY
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum WorkerStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum WorkOrderStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
+model Worker {
+  id          String       @id @default(cuid())
+  name        String
+  skills      String
+  location    String
+  status      WorkerStatus @default(AVAILABLE)
+  workOrders  WorkOrder[]
+  notifications Notification[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Asset {
+  id          String     @id @default(cuid())
+  assetCode   String     @unique
+  name        String
+  category    String
+  location    String
+  description String?
+  incidents   Incident[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model SOP {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Incident {
+  id                String         @id @default(cuid())
+  description       String
+  category          String?
+  location          String?
+  assetId           String?
+  asset             Asset?         @relation(fields: [assetId], references: [id])
+  issue             String?
+  severity          Priority?
+  confidence        Float?
+  status            IncidentStatus @default(NEW)
+  aiAnalysis        String?
+  recommendedAction String?
+  workOrder         WorkOrder?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model WorkOrder {
+  id          String          @id @default(cuid())
+  incidentId  String          @unique
+  incident    Incident        @relation(fields: [incidentId], references: [id])
+  workerId    String?
+  worker      Worker?         @relation(fields: [workerId], references: [id])
+  priority    Priority
+  slaHours    Int
+  description String
+  action      String
+  status      WorkOrderStatus @default(PENDING)
+  assignedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  notifications Notification[]
+}
+
+model Notification {
+  id          String             @id @default(cuid())
+  workerId    String
+  worker      Worker             @relation(fields: [workerId], references: [id])
+  workOrderId String
+  workOrder   WorkOrder          @relation(fields: [workOrderId], references: [id])
+  title       String
+  message     String
+  status      NotificationStatus @default(UNREAD)
+  createdAt   DateTime           @default(now())
+}
