@@ -1,6 +1,6 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/set-state-in-effect -- cascading Client→Property→Asset selects require synchronizing derived state (reset asset, auto-fill location) when property changes */
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -67,7 +67,7 @@ function NewComplaintForm() {
       }
     }
     loadProperties();
-  }, [clientId]);
+  }, [clientId, propertyId, initialPropertyId]);
 
   useEffect(() => {
     if (!propertyId) {
@@ -84,7 +84,7 @@ function NewComplaintForm() {
         setAssetId("");
       }
     }
-  }, [propertyId]);
+  }, [propertyId, properties, location, assetId, assets]);
 
   const filteredAssets = propertyId ? assets.filter((a) => !a.propertyId || a.propertyId === propertyId) : [];
 
