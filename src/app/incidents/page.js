@@ -106,7 +106,8 @@ export default function IncidentsPage() {
                     <tr key={inc.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="max-w-xs px-4 py-3">
                         <p className="truncate font-medium text-white">{inc.description}</p>
-                        <p className="truncate text-xs text-slate-500">{inc.issue || "—"}</p>
+                        <p className="truncate text-xs text-slate-500">{inc.client?.name || "No client"} → {inc.property?.name || "No property"} {inc.asset?.assetCode ? `· ${inc.asset.assetCode}` : ""}</p>
+                        <p className="truncate text-xs text-slate-500">{inc.reporterName ? `Reporter: ${inc.reporterName}` : "No reporter"} · {inc.issue || "—"}</p>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-400">{inc.category || "—"}</td>
                       <td className="px-4 py-3 text-xs text-slate-400">{inc.location}</td>

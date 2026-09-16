@@ -29,7 +29,10 @@ export async function GET(request) {
       openIncidents,
       criticalIncidents,
       incidentStatusRows,
+      totalClients,
+      totalProperties,
       recentIncidents,
+      recentProperties,
     ] = await Promise.all([
       prisma.workOrder.count(),
 
@@ -76,6 +79,10 @@ export async function GET(request) {
         _count: { status: true },
       }),
 
+      prisma.client.count(),
+
+      prisma.property.count(),
+
       prisma.incident.findMany({
         orderBy: {
           createdAt: "desc",
@@ -93,6 +100,10 @@ export async function GET(request) {
           status: true,
           recommendedAction: true,
           createdAt: true,
+          reporterName: true,
+          reporterEmail: true,
+          client: { select: { id: true, name: true } },
+          property: { select: { id: true, name: true, propertyCode: true, address: true } },
           asset: {
             select: {
               assetCode: true,
@@ -119,6 +130,18 @@ export async function GET(request) {
               },
             },
           },
+        },
+      }),
+      prisma.property.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 4,
+        select: {
+          id: true,
+          name: true,
+          propertyCode: true,
+          address: true,
+          client: { select: { id: true, name: true } },
+          _count: { select: { incidents: true, assets: true } },
         },
       }),
     ]);
@@ -152,7 +175,10 @@ export async function GET(request) {
       criticalIncidents,
       incidentStatusCounts: statusCounts,
       totalIncidents,
+      totalClients,
+      totalProperties,
       recentIncidents,
+      recentProperties,
       pagination: {
         page,
         limit,

@@ -65,6 +65,9 @@ export default function OverviewPage() {
   const criticalIncidents = dashboard?.criticalIncidents || 0;
   const activeWorkOrders = dashboard?.activeWorkOrders ?? ((dashboard?.pending ?? 0) + (dashboard?.assigned ?? 0) + (dashboard?.inProgress ?? 0));
   const availableWorkers = workersData?.counts?.available ?? 0;
+  const totalClients = dashboard?.totalClients ?? 0;
+  const totalProperties = dashboard?.totalProperties ?? 0;
+  const recentProperties = dashboard?.recentProperties || [];
 
   const recentIncidents = dashboard?.recentIncidents || [];
   const workerCounts = workersData?.counts || { available: 0, busy: 0, offline: 0, total: 0 };
@@ -126,9 +129,27 @@ export default function OverviewPage() {
         </div>
       </Reveal>
 
-      {/* Summary Metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Reveal delay={50}>
+      {/* Summary Metrics - 6 cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Reveal delay={30}>
+          <MetricCard
+            label="Total Clients"
+            value={totalClients}
+            sublabel={`${totalProperties} properties`}
+            accent="slate"
+            icon={<span className="text-sm">◉</span>}
+          />
+        </Reveal>
+        <Reveal delay={60}>
+          <MetricCard
+            label="Total Properties"
+            value={totalProperties}
+            sublabel={`${totalClients} clients`}
+            accent="slate"
+            icon={<span className="text-sm">⬣</span>}
+          />
+        </Reveal>
+        <Reveal delay={90}>
           <MetricCard
             label="Open Incidents"
             value={openIncidents}
@@ -137,7 +158,7 @@ export default function OverviewPage() {
             icon={<span className="text-sm">◈</span>}
           />
         </Reveal>
-        <Reveal delay={100}>
+        <Reveal delay={120}>
           <MetricCard
             label="Critical Incidents"
             value={criticalIncidents}
@@ -155,7 +176,7 @@ export default function OverviewPage() {
             icon={<span className="text-sm">⧉</span>}
           />
         </Reveal>
-        <Reveal delay={200}>
+        <Reveal delay={180}>
           <MetricCard
             label="Available Workers"
             value={availableWorkers}
@@ -165,6 +186,36 @@ export default function OverviewPage() {
           />
         </Reveal>
       </div>
+
+      {/* Properties & Clients - recent operational relationships */}
+      <Reveal>
+        <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Properties & Clients</h2>
+              <p className="text-xs text-slate-500">Recent properties · Client → Property → Asset → Incident chain</p>
+            </div>
+            <div className="flex gap-2">
+              <Link href="/clients" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800">View Clients</Link>
+              <Link href="/properties" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800">View Properties</Link>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {recentProperties.length === 0 ? (
+              <p className="col-span-full py-4 text-center text-xs text-slate-500">No properties.</p>
+            ) : (
+              recentProperties.map((p) => (
+                <Link key={p.id} href={`/properties/${p.id}`} className="rounded-lg border border-slate-800 bg-slate-950 p-3 hover:border-slate-700 hover:bg-slate-900 transition">
+                  <p className="text-sm font-medium text-white truncate">{p.name}</p>
+                  <p className="text-xs font-mono text-slate-500">{p.propertyCode}</p>
+                  <p className="text-xs text-slate-400 truncate">{p.client?.name}</p>
+                  <p className="mt-1 text-xs text-slate-500">{p._count?.assets ?? 0} assets · {p._count?.incidents ?? 0} incidents</p>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+      </Reveal>
 
       {/* Operations Overview */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -280,6 +331,9 @@ export default function OverviewPage() {
                       {incident.severity && <SeverityBadge severity={incident.severity} />}
                       <StatusBadge status={incident.status} />
                     </div>
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      {incident.client?.name ? `${incident.client.name} → ` : ""}{incident.property?.name || incident.property?.propertyCode || "No property"} {incident.asset?.assetCode ? `· ${incident.asset.assetCode}` : ""} {incident.reporterName ? `· ${incident.reporterName}` : ""}
+                    </p>
                     <p className="mt-1 truncate text-xs text-slate-500">{incident.location} · {new Date(incident.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">

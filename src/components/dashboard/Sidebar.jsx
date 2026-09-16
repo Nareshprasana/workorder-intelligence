@@ -9,6 +9,13 @@ const navSections = [
     items: [{ name: "Dashboard", href: "/", icon: "◈" }],
   },
   {
+    label: "CUSTOMERS",
+    items: [
+      { name: "Clients", href: "/clients", icon: "◉" },
+      { name: "Properties", href: "/properties", icon: "⬣" },
+    ],
+  },
+  {
     label: "OPERATIONS",
     items: [
       { name: "Incidents", href: "/incidents", icon: "⚑" },

@@ -11,6 +11,16 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("🌱 Seeding database...");
 
+  // Clean existing data in dependency order
+  await prisma.notification.deleteMany();
+  await prisma.workOrder.deleteMany();
+  await prisma.incident.deleteMany();
+  await prisma.asset.deleteMany();
+  await prisma.property.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.sOP.deleteMany();
+  await prisma.worker.deleteMany();
+
   const workers = await Promise.all([
     prisma.worker.create({
       data: {
@@ -56,6 +66,87 @@ async function main() {
 
   console.log(`✓ Created ${workers.length} workers`);
 
+  // Create Clients
+  const divyaSree = await prisma.client.create({
+    data: {
+      name: "DivyaSree Facilities",
+      email: "facilities@divyasree.com",
+      phone: "9876543210",
+      companyName: "DivyaSree Group",
+      status: "ACTIVE",
+    },
+  });
+
+  const sunrise = await prisma.client.create({
+    data: {
+      name: "Sunrise Estates",
+      email: "contact@sunrise-estates.com",
+      phone: "9876500001",
+      companyName: "Sunrise Group",
+      status: "ACTIVE",
+    },
+  });
+
+  const inactiveClient = await prisma.client.create({
+    data: {
+      name: "Inactive Properties Ltd",
+      email: "inactive@example.com",
+      phone: "9999999999",
+      companyName: "Inactive Ltd",
+      status: "INACTIVE",
+    },
+  });
+
+  console.log(`✓ Created 3 clients`);
+
+  // Create Properties
+  const blockA = await prisma.property.create({
+    data: {
+      name: "DivyaSree Block A",
+      propertyCode: "PROP-BLOCK-A-001",
+      address: "DivyaSree Campus, Block A, Bangalore - 560001",
+      clientId: divyaSree.id,
+    },
+  });
+
+  const blockB = await prisma.property.create({
+    data: {
+      name: "DivyaSree Block B",
+      propertyCode: "PROP-BLOCK-B-001",
+      address: "DivyaSree Campus, Block B, Bangalore - 560001",
+      clientId: divyaSree.id,
+    },
+  });
+
+  const blockC = await prisma.property.create({
+    data: {
+      name: "DivyaSree Block C",
+      propertyCode: "PROP-BLOCK-C-001",
+      address: "DivyaSree Campus, Block C, Bangalore - 560001",
+      clientId: divyaSree.id,
+    },
+  });
+
+  const sunriseTower = await prisma.property.create({
+    data: {
+      name: "Sunrise Tower 1",
+      propertyCode: "PROP-SUNRISE-001",
+      address: "Sunrise Estate, Tower 1, Bangalore - 560002",
+      clientId: sunrise.id,
+    },
+  });
+
+  const inactiveProp = await prisma.property.create({
+    data: {
+      name: "Inactive Property",
+      propertyCode: "PROP-INACTIVE-001",
+      address: "Inactive Address",
+      clientId: inactiveClient.id,
+    },
+  });
+
+  console.log(`✓ Created 5 properties`);
+
   const assets = await Promise.all([
     prisma.asset.create({
       data: {
@@ -64,6 +155,7 @@ async function main() {
         category: "HVAC",
         location: "Block B / Floor 4 / Room 401",
         description: "1.5 ton split air conditioner",
+        propertyId: blockB.id,
       },
     }),
     prisma.asset.create({
@@ -73,6 +165,7 @@ async function main() {
         category: "HVAC",
         location: "Block B / Floor 4 / Room 402",
         description: "1.5 ton split air conditioner",
+        propertyId: blockB.id,
       },
     }),
     prisma.asset.create({
@@ -82,6 +175,7 @@ async function main() {
         category: "HVAC",
         location: "Block B / Floor 4 / Room 403",
         description: "2 ton split air conditioner",
+        propertyId: blockB.id,
       },
     }),
     prisma.asset.create({
@@ -91,6 +185,7 @@ async function main() {
         category: "LIFT",
         location: "Block A / Main Lobby",
         description: "Passenger elevator",
+        propertyId: blockA.id,
       },
     }),
     prisma.asset.create({
@@ -100,6 +195,7 @@ async function main() {
         category: "LIFT",
         location: "Block A / Main Lobby",
         description: "Passenger elevator",
+        propertyId: blockA.id,
       },
     }),
     prisma.asset.create({
@@ -109,6 +205,7 @@ async function main() {
         category: "PLUMBING",
         location: "Block A / Basement",
         description: "Main water supply pump",
+        propertyId: blockA.id,
       },
     }),
     prisma.asset.create({
@@ -118,6 +215,7 @@ async function main() {
         category: "ELECTRICAL",
         location: "Block A / Utility Area",
         description: "250 KVA backup generator",
+        propertyId: blockA.id,
       },
     }),
     prisma.asset.create({
@@ -127,6 +225,7 @@ async function main() {
         category: "HVAC",
         location: "Block C / Floor 2 / Room 201",
         description: "1.5 ton split air conditioner",
+        propertyId: blockC.id,
       },
     }),
     prisma.asset.create({
@@ -136,6 +235,7 @@ async function main() {
         category: "PLUMBING",
         location: "Block B / Basement",
         description: "Water circulation pump",
+        propertyId: blockB.id,
       },
     }),
     prisma.asset.create({
@@ -145,6 +245,7 @@ async function main() {
         category: "ELECTRICAL",
         location: "Block B / Floor 4",
         description: "Main electrical distribution panel",
+        propertyId: blockB.id,
       },
     }),
   ]);
@@ -208,6 +309,10 @@ async function main() {
       category: "HVAC",
       location: "Block B / Floor 4 / Room 402",
       assetId: ac402.id,
+      clientId: divyaSree.id,
+      propertyId: blockB.id,
+      reporterName: "Facility Manager",
+      reporterEmail: "manager@divyasree.com",
       issue: "Cooling failure",
       severity: "MEDIUM",
       confidence: 0.95,
@@ -220,6 +325,9 @@ async function main() {
       category: "HVAC",
       location: "Block B / Floor 4 / Room 402",
       assetId: ac402.id,
+      clientId: divyaSree.id,
+      propertyId: blockB.id,
+      reporterName: "Facility Manager",
       issue: "Cooling failure",
       severity: "MEDIUM",
       confidence: 0.94,
@@ -232,6 +340,9 @@ async function main() {
       category: "HVAC",
       location: "Block B / Floor 4 / Room 401",
       assetId: ac401.id,
+      clientId: divyaSree.id,
+      propertyId: blockB.id,
+      reporterName: "Tenant - Room 401",
       issue: "Unusual noise",
       severity: "LOW",
       confidence: 0.91,
@@ -244,6 +355,9 @@ async function main() {
       category: "LIFT",
       location: "Block A / Main Lobby",
       assetId: liftA1.id,
+      clientId: divyaSree.id,
+      propertyId: blockA.id,
+      reporterName: "Security",
       issue: "Abnormal noise",
       severity: "HIGH",
       confidence: 0.93,
@@ -256,6 +370,9 @@ async function main() {
       category: "PLUMBING",
       location: "Block A / Basement",
       assetId: pumpA1.id,
+      clientId: divyaSree.id,
+      propertyId: blockA.id,
+      reporterName: "Maintenance Staff",
       issue: "Low water pressure",
       severity: "MEDIUM",
       confidence: 0.88,
@@ -268,6 +385,9 @@ async function main() {
       category: "ELECTRICAL",
       location: "Block B / Floor 4",
       assetId: dbB4.id,
+      clientId: divyaSree.id,
+      propertyId: blockB.id,
+      reporterName: "Electrician",
       issue: "Power interruption",
       severity: "HIGH",
       confidence: 0.92,
