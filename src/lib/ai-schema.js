@@ -13,8 +13,6 @@ export const maintenanceAnalysisSchema = z.object({
 
   location: z.string().nullable(),
 
-  assetCode: z.string().nullable(),
-
   severity: z.enum([
     "LOW",
     "MEDIUM",

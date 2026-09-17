@@ -152,10 +152,10 @@ export default function IncidentDetailPage() {
       <Reveal>
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
           <h2 className="text-sm font-semibold text-white">Workflow</h2>
-          <p className="text-xs text-slate-500">Client → Property → Asset → Complaint → AI Analysis → Validation → Work Order → Worker → Completion</p>
+          <p className="text-xs text-slate-500">Resident → Complaint → AI Analysis → Work Request → Worker → Completion</p>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <div>
-              <Step title="Complaint Received" desc={`${incident.client?.name || "No client"} → ${incident.property?.name || "No property"}${incident.asset ? ` → ${incident.asset.assetCode}` : ""}`} state={complaintDone ? "done" : "pending"} />
+              <Step title="Complaint Received" desc={`${incident.resident?.name || incident.reporterName || "No resident"} → ${incident.location}`} state={complaintDone ? "done" : "pending"} />
               <Step
                 title="AI Analysis"
                 desc={status === "ANALYZING" ? "AI analyzing..." : aiDone ? `Category ${incident.category || analysis?.category || "—"} · Confidence ${incident.confidence ? Math.round(incident.confidence * 100) + "%" : "—"}` : status === "NEW" ? "Not yet analyzed" : "Awaiting AI"}
@@ -180,9 +180,7 @@ export default function IncidentDetailPage() {
             <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950 p-4">
               <h3 className="text-xs font-semibold tracking-widest text-slate-500">CHAIN</h3>
               <div className="space-y-2 text-sm">
-                <div><p className="text-xs text-slate-500">CLIENT</p><p className="text-white">{incident.client?.name || "—"} {incident.client?.companyName ? `· ${incident.client.companyName}` : ""}</p></div>
-                <div><p className="text-xs text-slate-500">PROPERTY</p><p className="text-white">{incident.property ? `${incident.property.name} (${incident.property.propertyCode})` : "—"}</p><p className="text-xs text-slate-500">{incident.property?.address || ""}</p></div>
-                <div><p className="text-xs text-slate-500">ASSET</p><p className="text-white">{incident.asset ? `${incident.asset.name} · ${incident.asset.assetCode} · ${incident.asset.category}` : "—"}</p><p className="text-xs text-slate-500">{incident.asset?.location || ""}</p></div>
+                <div><p className="text-xs text-slate-500">RESIDENT</p><p className="text-white">{incident.resident?.name || incident.reporterName || "—"} · {incident.resident?.building || ""}, {incident.resident?.apartment || ""}</p></div>
                 <div><p className="text-xs text-slate-500">COMPLAINT</p><p className="text-white">{incident.description}</p><p className="text-xs text-slate-500">{incident.location} · Reporter: {incident.reporterName || "—"} {incident.reporterEmail ? `· ${incident.reporterEmail}` : ""}</p></div>
               </div>
             </div>

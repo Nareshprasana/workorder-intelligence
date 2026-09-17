@@ -250,7 +250,7 @@ export default function OverviewPage() {
                       <StatusBadge status={incident.status} />
                     </div>
                     <p className="mt-1 truncate text-xs text-slate-500">
-                      {incident.resident ? `${incident.resident.building}, ${incident.resident.apartment}` : incident.location} {incident.asset?.assetCode ? `· ${incident.asset.assetCode}` : ""} · {new Date(incident.createdAt).toLocaleDateString()}
+                      {incident.resident ? `${incident.resident.building}, ${incident.resident.apartment}` : incident.location} · {new Date(incident.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-1">

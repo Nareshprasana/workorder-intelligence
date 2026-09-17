@@ -22,7 +22,7 @@ export async function GET(request) {
       ...(limit ? { take: limit } : {}),
       include: {
         client: { select: { id: true, name: true, status: true, companyName: true } },
-        _count: { select: { assets: true, incidents: true } },
+        _count: { select: { incidents: true } },
       },
     });
 
@@ -39,7 +39,7 @@ export async function GET(request) {
           address: p.address,
           clientId: p.clientId,
           client: p.client,
-          assetCount: p._count.assets,
+          assetCount: 0,
           incidentCount: p._count.incidents,
           openIncidents: open,
           createdAt: p.createdAt,

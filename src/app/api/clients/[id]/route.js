@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
       include: {
         properties: {
           include: {
-            _count: { select: { assets: true, incidents: true } },
+            _count: { select: { incidents: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -30,7 +30,6 @@ export async function GET(request, { params }) {
       take: 5,
       include: {
         property: { select: { id: true, name: true, propertyCode: true } },
-        asset: { select: { assetCode: true, name: true } },
         workOrder: { select: { id: true, status: true, worker: { select: { name: true } } } },
       },
     });
@@ -58,7 +57,7 @@ export async function GET(request, { params }) {
           name: p.name,
           propertyCode: p.propertyCode,
           address: p.address,
-          assetCount: p._count.assets,
+          assetCount: 0,
           incidentCount: p._count.incidents,
         })),
       },

@@ -63,7 +63,6 @@ export async function GET(request) {
           createdAt: true,
           reporterName: true,
           resident: { select: { id: true, name: true, apartment: true, building: true } },
-          asset: { select: { assetCode: true, name: true, category: true, location: true } },
           workOrder: {
             select: {
               id: true,

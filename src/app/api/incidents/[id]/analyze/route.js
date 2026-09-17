@@ -27,7 +27,7 @@ export async function POST(request, { params }) {
 
     const incident = await prisma.incident.findUnique({
       where: { id },
-      include: { asset: true, workOrder: true },
+      include: { workOrder: true },
     });
 
     if (!incident) {
@@ -52,11 +52,10 @@ export async function POST(request, { params }) {
       analysis = await analyzeMaintenanceComplaint({
         description: incident.description,
         location: incident.location,
-        assetCode: incident.asset?.assetCode ?? null,
       });
     } catch (aiError) {
       console.error("Gemini analysis failed for incident", incident.id, aiError?.message);
-      const current = await prisma.incident.findUnique({ where: { id: incident.id }, include: { asset: true, resident: true, workOrder: true } });
+      const current = await prisma.incident.findUnique({ where: { id: incident.id }, include: { resident: true, workOrder: true } });
       return Response.json(
         {
           success: false,
@@ -79,17 +78,15 @@ export async function POST(request, { params }) {
         aiAnalysis: JSON.stringify(analysis),
         status: analysis.missingInformation.length > 0 ? "NEEDS_INFORMATION" : "READY",
       },
-      include: { asset: true, resident: true, client: true, property: true, workOrder: true },
+      include: { resident: true, client: true, property: true, workOrder: true },
     });
 
-    // Auto-create Work Request when READY (simple product workflow)
     let workOrder = null;
     let notification = null;
     if (updatedIncident.status === "READY" && !updatedIncident.workOrder) {
       const priority = getPriorityForSeverity(updatedIncident.severity);
       const slaHours = getSlaHoursForPriority(priority);
       const workers = await prisma.worker.findMany();
-      // Use incident for eligibility (category + location)
       const eligibleWorker = findEligibleWorker(workers, updatedIncident);
       workOrder = await prisma.workOrder.create({
         data: {

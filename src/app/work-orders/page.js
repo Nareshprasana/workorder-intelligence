@@ -124,7 +124,7 @@ export default function WorkOrdersPage() {
                   <tr key={wo.id} className="hover:bg-slate-800/40">
                     <td className="max-w-xs px-4 py-3">
                       <p className="truncate font-medium text-white">{wo.incident?.issue || wo.description.slice(0, 50)}</p>
-                      <p className="truncate text-xs text-slate-500">{wo.incident?.location} {wo.incident?.property?.name ? `· ${wo.incident.property.name}` : ""} {wo.incident?.asset?.assetCode ? `· ${wo.incident.asset.assetCode}` : ""}</p>
+                      <p className="truncate text-xs text-slate-500">{wo.incident?.resident ? `${wo.incident.resident.name} · ${wo.incident.resident.building}, ${wo.incident.resident.apartment}` : wo.incident?.location}</p>
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {wo.status === "PENDING" ? <span className="font-medium text-amber-400">Awaiting worker assignment</span> : wo.status === "ASSIGNED" && wo.worker ? <span className="font-medium text-sky-300">Assigned to {wo.worker.name}</span> : wo.status === "IN_PROGRESS" && wo.worker ? <span className="font-medium text-blue-300">{wo.worker.name} is working</span> : wo.status === "COMPLETED" && wo.worker ? <span className="font-medium text-emerald-300">Completed by {wo.worker.name}</span> : wo.worker ? <Link href={`/workers/${wo.worker.id}`} className="text-slate-300 hover:text-white hover:underline">{wo.worker.name}</Link> : <span className="text-amber-400">Awaiting worker</span>}

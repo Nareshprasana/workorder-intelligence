@@ -6,7 +6,6 @@ export async function POST(request) {
 
     const description = body.description?.trim();
     const location = body.location?.trim() || null;
-    const assetCode = body.assetCode?.trim() || null;
 
     if (!description) {
       return Response.json(
@@ -20,7 +19,6 @@ export async function POST(request) {
     const analysis = await analyzeMaintenanceComplaint({
       description,
       location,
-      assetCode,
     });
 
     return Response.json({

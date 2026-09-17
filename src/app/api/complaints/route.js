@@ -14,9 +14,7 @@ export async function POST(request) {
     const description = body.description?.trim();
     const location = body.location?.trim();
     const residentId = body.residentId?.toString().trim() || null;
-    const rawAssetCode = (body.assetId ?? body.assetCode ?? null)?.toString().trim() || null;
 
-    // Legacy support
     const clientId = body.clientId?.toString().trim() || null;
     const propertyId = body.propertyId?.toString().trim() || null;
     const reporterName = body.reporterName?.toString().trim() || null;
@@ -39,7 +37,6 @@ export async function POST(request) {
       if (!resident) return Response.json({ error: "Resident not found." }, { status: 404 });
       if (resident.status !== "ACTIVE") return Response.json({ error: "Resident is inactive and cannot submit complaints." }, { status: 403 });
     } else if (clientId && propertyId) {
-      // Legacy Client/Property flow
       client = await prisma.client.findUnique({ where: { id: clientId } });
       if (!client) return Response.json({ error: "Client not found." }, { status: 404 });
       if (client.status !== "ACTIVE") return Response.json({ error: "Client is inactive and cannot submit complaints." }, { status: 403 });
@@ -50,21 +47,10 @@ export async function POST(request) {
       return Response.json({ error: "residentId is required." }, { status: 400 });
     }
 
-    let asset = null;
-    if (rawAssetCode) {
-      asset = await prisma.asset.findUnique({ where: { assetCode: rawAssetCode } });
-      if (!asset) return Response.json({ error: `Asset "${rawAssetCode}" was not found.` }, { status: 404 });
-      // If legacy property flow, verify asset belongs to property
-      if (property && asset.propertyId && asset.propertyId !== property.id) {
-        return Response.json({ error: `Asset "${rawAssetCode}" does not belong to the selected property.` }, { status: 403 });
-      }
-    }
-
     const incident = await prisma.incident.create({
       data: {
         description,
         location,
-        assetId: asset?.id ?? null,
         residentId: resident?.id ?? null,
         clientId: client?.id ?? null,
         propertyId: property?.id ?? null,
@@ -77,7 +63,6 @@ export async function POST(request) {
         resident: { select: { id: true, name: true, apartment: true, building: true } },
         client: { select: { id: true, name: true } },
         property: { select: { id: true, name: true, propertyCode: true } },
-        asset: { select: { assetCode: true, name: true } },
       },
     });
 
@@ -102,7 +87,6 @@ export async function GET() {
         resident: { select: { id: true, name: true, apartment: true, building: true } },
         client: { select: { id: true, name: true } },
         property: { select: { id: true, name: true, propertyCode: true } },
-        asset: { select: { assetCode: true, name: true } },
       },
     });
     return Response.json({ success: true, incidents });

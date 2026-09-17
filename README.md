@@ -42,7 +42,7 @@ This prototype demonstrates server-side ownership validation without a full auth
 **Resident → Complaint → AI → Work Request → Worker**
 
 - Every `Complaint` (Incident) must belong to an `ACTIVE` Resident (`residentId` required). Inactive residents cannot submit complaints (`403`).
-- `Asset` (via `assetCode`) if supplied is validated server-side.
+- Complaint submission requires only `Resident`, `Location`, `Complaint description` (no Asset).
 - Worker assignment is deterministic: `AVAILABLE` + required skill + location preference. No AI worker selection.
 - Worker actions (`accept`/`reject`/`complete`) verify `workOrder.workerId === workerId` server-side (403 otherwise). A worker cannot act on another worker's work.
 - Legacy `Client → Property` chain is retained in the database for backward compatibility but is no longer part of the product UI.

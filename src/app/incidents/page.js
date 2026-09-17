@@ -129,7 +129,7 @@ export default function IncidentsPage() {
                       <td className="max-w-xs px-4 py-3">
                         <Link href={`/complaints/${inc.id}`} className="block hover:opacity-80">
                           <p className="truncate font-medium text-white hover:text-sky-300">{inc.description}</p>
-                          <p className="truncate text-xs text-slate-500">{inc.resident ? `${inc.resident.name} · ${inc.resident.building}, ${inc.resident.apartment}` : inc.reporterName ? `Reporter: ${inc.reporterName}` : "No resident"} {inc.asset?.assetCode ? `· ${inc.asset.assetCode}` : ""}</p>
+                          <p className="truncate text-xs text-slate-500">{inc.resident ? `${inc.resident.name} · ${inc.resident.building}, ${inc.resident.apartment}` : inc.reporterName ? `Reporter: ${inc.reporterName}` : "No resident"}</p>
                           <p className="truncate text-xs text-slate-500">{inc.issue || "—"}</p>
                         </Link>
                       </td>

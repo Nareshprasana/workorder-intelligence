@@ -98,10 +98,7 @@ export default function ComplaintDetailPage() {
           <h2 className="text-sm font-semibold text-white">Complaint</h2>
           <div className="mt-3 space-y-3 text-sm">
             <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Description</p><p className="text-white">{incident.description}</p></div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Location</p><p className="text-white">{incident.location}</p></div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Asset</p><p className="text-white">{incident.asset ? `${incident.asset.name} · ${incident.asset.assetCode}` : "—"}</p></div>
-            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Location</p><p className="text-white">{incident.location}</p></div>
             <p className="text-xs text-slate-500">Created {new Date(incident.createdAt).toLocaleString()}</p>
           </div>
         </div>

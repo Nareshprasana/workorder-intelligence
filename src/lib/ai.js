@@ -11,7 +11,6 @@ export const GEMINI_MODEL =
 export async function analyzeMaintenanceComplaint({
   description,
   location,
-  assetCode,
 }) {
   const prompt = `
 You are a maintenance operations AI.
@@ -24,21 +23,17 @@ ${description}
 Reported location:
 ${location || "Not provided"}
 
-Reported asset code:
-${assetCode || "Not provided"}
-
 Extract the maintenance information accurately.
 
 Rules:
 
-1. Do not invent an asset code.
-2. Do not invent a location.
-3. If important information is missing, put it in missingInformation.
-4. confidence must represent how confident you are in the extracted information.
-5. CRITICAL should only be used for immediate safety risks.
-6. If there is a possible electrical safety hazard, treat it seriously.
-7. recommendedAction should be a concise maintenance recommendation.
-8. Return only information supported by the complaint.
+1. Do not invent a location.
+2. If important information is missing, put it in missingInformation.
+3. confidence must represent how confident you are in the extracted information.
+4. CRITICAL should only be used for immediate safety risks.
+5. If there is a possible electrical safety hazard, treat it seriously.
+6. recommendedAction should be a concise maintenance recommendation.
+7. Return only information supported by the complaint.
 `;
 
   const response = await gemini.models.generateContent({
@@ -63,10 +58,6 @@ Rules:
             type: "STRING",
           },
           location: {
-            type: "STRING",
-            nullable: true,
-          },
-          assetCode: {
             type: "STRING",
             nullable: true,
           },
@@ -97,7 +88,6 @@ Rules:
           "category",
           "issue",
           "location",
-          "assetCode",
           "severity",
           "confidence",
           "missingInformation",

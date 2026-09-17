@@ -11,10 +11,6 @@ export async function GET(request, { params }) {
       where: { id },
       include: {
         client: { select: { id: true, name: true, status: true, companyName: true, email: true, phone: true } },
-        assets: {
-          orderBy: { createdAt: "desc" },
-          include: { _count: { select: { incidents: true } } },
-        },
         _count: { select: { incidents: true } },
       },
     });
@@ -26,7 +22,6 @@ export async function GET(request, { params }) {
         orderBy: { createdAt: "desc" },
         take: 5,
         include: {
-          asset: { select: { assetCode: true, name: true } },
           client: { select: { id: true, name: true } },
           workOrder: { select: { id: true, status: true } },
         },
@@ -43,20 +38,12 @@ export async function GET(request, { params }) {
         address: property.address,
         clientId: property.clientId,
         client: property.client,
-        assetCount: property.assets.length,
+        assetCount: 0,
         incidentCount: property._count.incidents,
         openIncidents,
         createdAt: property.createdAt,
         updatedAt: property.updatedAt,
-        assets: property.assets.map((a) => ({
-          id: a.id,
-          assetCode: a.assetCode,
-          name: a.name,
-          category: a.category,
-          location: a.location,
-          description: a.description,
-          incidentCount: a._count.incidents,
-        })),
+        assets: [],
       },
       recentIncidents,
     });

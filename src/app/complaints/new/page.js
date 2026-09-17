@@ -7,12 +7,10 @@ import Reveal from "../../../components/dashboard/Reveal";
 
 function NewComplaintForm() {
   const [residents, setResidents] = useState([]);
-  const [assets, setAssets] = useState([]);
 
   const [residentId, setResidentId] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  const [assetId, setAssetId] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,11 +23,9 @@ function NewComplaintForm() {
 
   useEffect(() => {
     async function load() {
-      const [resRes, assetRes] = await Promise.all([fetch("/api/residents"), fetch("/api/assets")]);
+      const resRes = await fetch("/api/residents");
       const resData = await resRes.json();
-      const assetData = await assetRes.json();
       if (resRes.ok) setResidents((resData.residents || []).filter((r) => r.status === "ACTIVE"));
-      if (assetRes.ok) setAssets(assetData.assets || []);
     }
     load();
   }, []);
@@ -58,7 +54,6 @@ function NewComplaintForm() {
       const finalStatus = data.incident?.status || data.status;
       setAiStatus(finalStatus);
       setAiResult(data.incident);
-      // If workOrder was auto-created, we could show note, but handled in READY card
     } catch (err) {
       setAiStatus("ERROR");
       setAiError(err.message || "AI analysis temporarily unavailable");
@@ -94,7 +89,7 @@ function NewComplaintForm() {
       const res = await fetch("/api/complaints", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ residentId, location, description, assetId: assetId || null }),
+        body: JSON.stringify({ residentId, location, description }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create complaint");
@@ -115,8 +110,6 @@ function NewComplaintForm() {
     setAiError("");
     setError("");
     setDescription("");
-    setAssetId("");
-    // keep resident and location
   }
 
   let missingInfo = [];
@@ -156,16 +149,6 @@ function NewComplaintForm() {
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-300">Complaint description *</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Example: AC is not cooling and water is leaking." rows={5} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-slate-600" />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Asset <span className="text-slate-500">(optional)</span></label>
-            <select value={assetId} onChange={(e) => setAssetId(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-slate-600">
-              <option value="">No asset (general complaint)</option>
-              {assets.map((a) => (
-                <option key={a.id} value={a.assetCode}>{a.assetCode} · {a.name} · {a.category}</option>
-              ))}
-            </select>
           </div>
 
           {error && <div className="rounded-lg border border-red-900/50 bg-red-950/30 p-3 text-sm text-red-300">{error}</div>}

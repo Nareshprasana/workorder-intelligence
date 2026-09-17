@@ -14,8 +14,7 @@ async function main() {
   await prisma.notification.deleteMany();
   await prisma.workOrder.deleteMany();
   await prisma.incident.deleteMany();
-  // Keep Asset/SOP/Property/Client tables but clear them (not required for product)
-  try { await prisma.asset.deleteMany(); } catch {}
+  // Keep SOP/Property/Client tables but clear them (not required for product) - Asset removed
   try { await prisma.property.deleteMany(); } catch {}
   try { await prisma.client.deleteMany(); } catch {}
   try { await prisma.sOP.deleteMany(); } catch {}

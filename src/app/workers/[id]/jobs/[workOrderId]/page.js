@@ -140,7 +140,6 @@ export default function JobDetailPage() {
                 <div><p className="text-xs text-slate-500">SLA</p><p className="text-white">{wo.slaHours} hours</p></div>
                 <div><p className="text-xs text-slate-500">Resident</p><p className="text-white">{inc?.resident ? `${inc.resident.name} · ${inc.resident.building}, ${inc.resident.apartment}` : inc?.reporterName || "—"}</p><p className="text-xs text-slate-500">{inc?.resident?.phone || inc?.reporterPhone || ""} {inc?.resident?.email ? `· ${inc.resident.email}` : ""}</p></div>
                 <div><p className="text-xs text-slate-500">Location</p><p className="text-white">{inc?.location || wo.description}</p></div>
-                <div><p className="text-xs text-slate-500">Asset</p><p className="text-white">{inc?.asset ? `${inc.asset.name} · ${inc.asset.assetCode}` : "—"}</p><p className="text-xs text-slate-500">{inc?.asset?.location || ""}</p></div>
                 <div className="sm:col-span-2 rounded-lg border border-sky-900/50 bg-sky-950/20 p-3">
                   <p className="text-xs font-semibold text-sky-300">AI Recommended Action</p>
                   <p className="mt-1 text-sm text-white">{wo.action}</p>

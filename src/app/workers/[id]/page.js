@@ -276,7 +276,7 @@ export default function WorkerPage() {
             <div className="mt-2">
               <p className="text-sm font-semibold text-white">{currentJob.incident?.issue || currentJob.description.slice(0, 60)}</p>
               <p className="mt-1 text-xs text-slate-400">
-                Resident: {currentJob.incident?.resident?.name || "—"} · {currentJob.incident?.resident ? `${currentJob.incident.resident.building}, ${currentJob.incident.resident.apartment}` : currentJob.incident?.location} {currentJob.incident?.asset?.assetCode ? `· ${currentJob.incident.asset.assetCode}` : ""}
+                Resident: {currentJob.incident?.resident?.name || "—"} · {currentJob.incident?.resident ? `${currentJob.incident.resident.building}, ${currentJob.incident.resident.apartment}` : currentJob.incident?.location}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <PriorityBadge priority={currentJob.priority} />

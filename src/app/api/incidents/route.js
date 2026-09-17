@@ -37,7 +37,6 @@ export async function GET(request) {
         skip,
         take: limit,
         include: {
-          asset: { select: { assetCode: true, name: true, category: true, location: true } },
           resident: { select: { id: true, name: true, apartment: true, building: true, phone: true, email: true } },
           client: { select: { id: true, name: true } },
           property: { select: { id: true, name: true, propertyCode: true } },

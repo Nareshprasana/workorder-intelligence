@@ -21,7 +21,6 @@ export async function POST(request, { params }) {
       where: { id },
       include: {
         workOrder: true,
-        asset: true,
       },
     });
 
