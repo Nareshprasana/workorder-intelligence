@@ -40,37 +40,7 @@ async function main() {
   ]);
   console.log(`✓ Created ${workers.length} workers`);
 
-  // Minimal complaints - mix of statuses to demonstrate workflow, but keep simple
-  // We'll create one READY complaint with work order to show live data, and one NEW
-  const ravi = residents.find(r => r.name === "Ravi Kumar");
-  const priya = residents.find(r => r.name === "Priya Sharma");
-
-  // Create a complaint that will be NEW -> will be analyzed on demand (not pre-analyzed to keep AI live)
-  await prisma.incident.create({
-    data: {
-      description: "AC is not cooling in room 401",
-      location: "Block B, Room 401",
-      residentId: ravi.id,
-      reporterName: ravi.name,
-      reporterEmail: ravi.email,
-      reporterPhone: ravi.phone,
-      status: "NEW",
-    },
-  });
-
-  await prisma.incident.create({
-    data: {
-      description: "Water leakage in bathroom, Block A Room 203",
-      location: "Block A, Room 203",
-      residentId: priya.id,
-      reporterName: priya.name,
-      reporterEmail: priya.email,
-      reporterPhone: priya.phone,
-      status: "NEW",
-    },
-  });
-
-  console.log(`✓ Created 2 demo complaints (NEW)`);
+  console.log(`✓ No demo complaints created (clean slate)`);
   console.log("✅ Database seeded successfully! Resident → Complaint → AI → Worker flow ready.");
 }
 
