@@ -1,53 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# AI-Powered Resident Complaint & Work Order Automation
 
-## Getting Started
+An AI-assisted facility operations prototype that converts resident maintenance complaints into structured work requests and routes them to appropriate maintenance workers.
 
-First, run the development server:
+The project demonstrates a simple principle:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+> Use AI where natural-language understanding is valuable, and use deterministic application logic where predictable operational behavior is required.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## The Problem
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Residential facility teams receive maintenance complaints in unstructured natural language.
 
-## Learn More
+For example:
 
-To learn more about Next.js, take a look at the following resources:
+> "There is water leaking in my apartment and the floor is getting wet."
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Traditionally, someone has to interpret the complaint, identify the maintenance category, determine its urgency, create a work request, find an appropriate worker, and communicate the job.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This prototype automates that workflow.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Solution
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application provides an end-to-end workflow:
 
-## Prototype security boundary
-
-This prototype demonstrates server-side ownership validation without a full authentication system.
-
-**Resident → Complaint → AI → Work Request → Worker**
-
-- Every `Complaint` (Incident) must belong to an `ACTIVE` Resident (`residentId` required). Inactive residents cannot submit complaints (`403`).
-- Complaint submission requires only `Resident`, `Location`, `Complaint description` (no Asset).
-- Worker assignment is deterministic: `AVAILABLE` + required skill + location preference. No AI worker selection.
-- Worker actions (`accept`/`reject`/`complete`) verify `workOrder.workerId === workerId` server-side (403 otherwise). A worker cannot act on another worker's work.
-- Legacy `Client → Property` chain is retained in the database for backward compatibility but is no longer part of the product UI.
-
-Production would add authenticated resident and worker accounts with role-based authorization.
-
-**Other hardening (prototype level):**
-- Request bodies validated, relationships verified server-side, safe error messages, no stack-trace leakage, no trust in client-provided ownership claims.
+```text
+Resident
+   │
+   ▼
+Submit Complaint
+   │
+   ▼
+Complaint stored in database
+   │
+   ▼
+AI Analysis
+   │
+   ├── Category
+   ├── Issue
+   ├── Severity
+   ├── Confidence
+   └── Recommended Action
+   │
+   ▼
+Work Request automatically created
+   │
+   ▼
+Deterministic Worker Assignment
+   │
+   ▼
+Worker Notification
+   │
+   ▼
+Worker Accepts
+   │
+   ▼
+Worker Completes Complaint
