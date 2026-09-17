@@ -20,6 +20,28 @@ function Badge({ children, tone = "slate" }) {
   return <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${map[tone]}`}>{children}</span>;
 }
 
+function StatusCell({ status }) {
+  if (status === "ANALYZING") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-900 bg-amber-950 px-2 py-0.5 text-xs font-medium text-amber-300">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+        </span>
+        ANALYZING
+      </span>
+    );
+  }
+  if (status === "NEEDS_INFORMATION") {
+    return <span className="rounded-full border border-amber-900 bg-amber-950 px-2 py-0.5 text-xs font-medium text-amber-300">NEEDS INFORMATION ⚠</span>;
+  }
+  if (status === "READY") {
+    return <span className="rounded-full border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-300">READY ✓</span>;
+  }
+  if (status === "NEW") return <Badge>NEW</Badge>;
+  return <Badge tone={status === "COMPLETED" ? "emerald" : status === "ASSIGNED" || status === "IN_PROGRESS" ? "blue" : "slate"}>{status}</Badge>;
+}
+
 export default function IncidentsPage() {
   const [incidents, setIncidents] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
@@ -105,14 +127,16 @@ export default function IncidentsPage() {
                   incidents.map((inc) => (
                     <tr key={inc.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="max-w-xs px-4 py-3">
-                        <p className="truncate font-medium text-white">{inc.description}</p>
-                        <p className="truncate text-xs text-slate-500">{inc.client?.name || "No client"} → {inc.property?.name || "No property"} {inc.asset?.assetCode ? `· ${inc.asset.assetCode}` : ""}</p>
-                        <p className="truncate text-xs text-slate-500">{inc.reporterName ? `Reporter: ${inc.reporterName}` : "No reporter"} · {inc.issue || "—"}</p>
+                        <Link href={`/incidents/${inc.id}`} className="block hover:opacity-80">
+                          <p className="truncate font-medium text-white hover:text-sky-300">{inc.description}</p>
+                          <p className="truncate text-xs text-slate-500">{inc.client?.name || "No client"} → {inc.property?.name || "No property"} {inc.asset?.assetCode ? `· ${inc.asset.assetCode}` : ""}</p>
+                          <p className="truncate text-xs text-slate-500">{inc.reporterName ? `Reporter: ${inc.reporterName}` : "No reporter"} · {inc.issue || "—"}</p>
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-400">{inc.category || "—"}</td>
                       <td className="px-4 py-3 text-xs text-slate-400">{inc.location}</td>
                       <td className="px-4 py-3">{inc.severity ? <Badge tone={inc.severity === "CRITICAL" ? "red" : inc.severity === "HIGH" ? "red" : inc.severity === "MEDIUM" ? "amber" : "slate"}>{inc.severity}</Badge> : <span className="text-xs text-slate-600">—</span>}</td>
-                      <td className="px-4 py-3"><Badge tone={inc.status === "READY" ? "emerald" : inc.status === "COMPLETED" ? "emerald" : inc.status === "NEW" ? "slate" : "amber"}>{inc.status}</Badge></td>
+                      <td className="px-4 py-3"><StatusCell status={inc.status} /></td>
                       <td className="px-4 py-3 text-xs text-slate-500">{new Date(inc.createdAt).toLocaleDateString()}</td>
                     </tr>
                   ))

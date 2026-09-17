@@ -404,19 +404,24 @@ export default function OverviewPage() {
           <Reveal delay={60}>
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
               <h2 className="text-sm font-semibold text-white">AI Intelligence</h2>
-              <p className="text-xs text-slate-500">Recent analysis</p>
+              <p className="text-xs text-slate-500">Recent analysis · Indeterminate when ANALYZING</p>
               <div className="mt-4 space-y-3">
-                {recentIncidents.slice(0, 4).map((inc) => (
-                  <div key={`ai-${inc.id}`} className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
-                    <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${inc.status === "READY" ? "bg-emerald-500" : inc.status === "NEEDS_INFORMATION" ? "bg-amber-500" : inc.severity === "CRITICAL" ? "bg-red-500" : "bg-sky-500"}`}></div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-slate-200 truncate">
-                        {inc.status === "READY" ? "Work order ready" : inc.status === "NEEDS_INFORMATION" ? "Missing information detected" : inc.severity === "CRITICAL" ? "Critical incident detected" : inc.severity === "HIGH" ? "High severity identified" : "Complaint analyzed"}
-                      </p>
-                      <p className="truncate text-xs text-slate-500">{inc.issue || inc.category} · {inc.confidence ? `${Math.round(inc.confidence*100)}% confidence` : "analyzed"}</p>
+                {recentIncidents.slice(0, 4).map((inc) => {
+                  const isAnalyzing = inc.status === "ANALYZING";
+                  return (
+                    <div key={`ai-${inc.id}`} className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
+                      <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${isAnalyzing ? "bg-amber-500 relative" : inc.status === "READY" ? "bg-emerald-500" : inc.status === "NEEDS_INFORMATION" ? "bg-amber-500" : inc.severity === "CRITICAL" ? "bg-red-500" : "bg-sky-500"}`}>
+                        {isAnalyzing && <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-amber-400 opacity-75"></span>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-200 truncate">
+                          {isAnalyzing ? "AI analyzing..." : inc.status === "READY" ? "AI analysis complete — ready for work order" : inc.status === "NEEDS_INFORMATION" ? "AI needs more information" : inc.severity === "CRITICAL" ? "Critical incident detected" : inc.severity === "HIGH" ? "High severity identified" : "Complaint analyzed"}
+                        </p>
+                        <p className="truncate text-xs text-slate-500">{isAnalyzing ? "Analyzing complaint..." : `${inc.issue || inc.category} · ${inc.confidence ? `${Math.round(inc.confidence*100)}% confidence` : "analyzed"}`}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {recentIncidents.length === 0 && <p className="py-4 text-center text-xs text-slate-500">No analysis yet.</p>}
                 <Link href="/ai" className="block text-center text-xs font-medium text-slate-400 hover:text-white">View AI analysis →</Link>
               </div>
