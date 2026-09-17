@@ -24,7 +24,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const name = body.name?.trim();
-    const apartment = body.apartment?.trim();
+    const apartment = (body.apartment ?? body.unit)?.toString().trim();
     const building = body.building?.trim();
     const email = body.email?.trim() || null;
     const phone = body.phone?.trim() || null;

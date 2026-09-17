@@ -33,15 +33,17 @@ export default function ResidentsPage() {
               <thead className="border-b border-slate-800 bg-slate-950/50 text-xs text-slate-400">
                 <tr>
                   <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Apartment/Unit</th>
-                  <th className="px-4 py-3 font-medium">Building/Block</th>
+                  <th className="px-4 py-3 font-medium">Unit</th>
+                  <th className="px-4 py-3 font-medium">Building</th>
                   <th className="px-4 py-3 font-medium">Phone</th>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Complaints</th>
+                  <th className="px-4 py-3 font-medium">View</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {loading ? <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">Loading...</td></tr> : residents.length === 0 ? <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">No residents.</td></tr> : residents.map((r) => (
+                {loading ? <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">Loading...</td></tr> : residents.length === 0 ? <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">No residents.</td></tr> : residents.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-800/40">
                     <td className="px-4 py-3 font-medium text-white">{r.name}</td>
                     <td className="px-4 py-3 text-slate-400">{r.apartment}</td>
@@ -49,6 +51,8 @@ export default function ResidentsPage() {
                     <td className="px-4 py-3 text-slate-400">{r.phone || "—"}</td>
                     <td className="px-4 py-3 text-slate-400">{r.email || "—"}</td>
                     <td className="px-4 py-3"><span className={`rounded-full border px-2 py-0.5 text-xs ${r.status === "ACTIVE" ? "border-emerald-900 bg-emerald-950 text-emerald-300" : "border-slate-700 bg-slate-800 text-slate-400"}`}>{r.status}</span></td>
+                    <td className="px-4 py-3 text-slate-400 text-center">{r._count?.incidents ?? 0}</td>
+                    <td className="px-4 py-3"><Link href={`/residents/${r.id}`} className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800">View</Link></td>
                   </tr>
                 ))}
               </tbody>
