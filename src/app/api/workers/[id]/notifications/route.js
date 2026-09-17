@@ -35,6 +35,8 @@ export async function GET(request, { params }) {
                 issue: true,
                 severity: true,
                 status: true,
+                resident: { select: { id: true, name: true, apartment: true, building: true } },
+                asset: { select: { assetCode: true, name: true } },
               },
             },
             worker: {

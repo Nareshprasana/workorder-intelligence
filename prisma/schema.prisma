@@ -49,6 +49,24 @@ enum ClientStatus {
   INACTIVE
 }
 
+enum ResidentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Resident {
+  id        String         @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  apartment String
+  building  String
+  status    ResidentStatus @default(ACTIVE)
+  incidents Incident[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
 model Client {
   id          String     @id @default(cuid())
   name        String
@@ -121,6 +139,8 @@ model Incident {
   client            Client?        @relation(fields: [clientId], references: [id])
   propertyId        String?
   property          Property?      @relation(fields: [propertyId], references: [id])
+  residentId        String?
+  resident          Resident?      @relation(fields: [residentId], references: [id])
   reporterName      String?
   reporterEmail     String?
   reporterPhone     String?

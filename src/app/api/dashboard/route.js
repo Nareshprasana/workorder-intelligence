@@ -29,64 +29,25 @@ export async function GET(request) {
       openIncidents,
       criticalIncidents,
       incidentStatusRows,
+      totalResidents,
       totalClients,
       totalProperties,
       recentIncidents,
-      recentProperties,
     ] = await Promise.all([
       prisma.workOrder.count(),
-
-      prisma.workOrder.count({
-        where: {
-          status: "PENDING",
-        },
-      }),
-
-      prisma.workOrder.count({
-        where: {
-          status: "ASSIGNED",
-        },
-      }),
-
-      prisma.workOrder.count({
-        where: {
-          status: "IN_PROGRESS",
-        },
-      }),
-
-      prisma.workOrder.count({
-        where: {
-          status: "COMPLETED",
-        },
-      }),
-
+      prisma.workOrder.count({ where: { status: "PENDING" } }),
+      prisma.workOrder.count({ where: { status: "ASSIGNED" } }),
+      prisma.workOrder.count({ where: { status: "IN_PROGRESS" } }),
+      prisma.workOrder.count({ where: { status: "COMPLETED" } }),
       prisma.incident.count(),
-
-      prisma.incident.count({
-        where: {
-          status: { not: "COMPLETED" },
-        },
-      }),
-
-      prisma.incident.count({
-        where: {
-          severity: "CRITICAL",
-        },
-      }),
-
-      prisma.incident.groupBy({
-        by: ["status"],
-        _count: { status: true },
-      }),
-
+      prisma.incident.count({ where: { status: { not: "COMPLETED" } } }),
+      prisma.incident.count({ where: { severity: "CRITICAL" } }),
+      prisma.incident.groupBy({ by: ["status"], _count: { status: true } }),
+      prisma.resident.count(),
       prisma.client.count(),
-
       prisma.property.count(),
-
       prisma.incident.findMany({
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
         select: {
@@ -101,17 +62,8 @@ export async function GET(request) {
           recommendedAction: true,
           createdAt: true,
           reporterName: true,
-          reporterEmail: true,
-          client: { select: { id: true, name: true } },
-          property: { select: { id: true, name: true, propertyCode: true, address: true } },
-          asset: {
-            select: {
-              assetCode: true,
-              name: true,
-              category: true,
-              location: true,
-            },
-          },
+          resident: { select: { id: true, name: true, apartment: true, building: true } },
+          asset: { select: { assetCode: true, name: true, category: true, location: true } },
           workOrder: {
             select: {
               id: true,
@@ -121,27 +73,9 @@ export async function GET(request) {
               assignedAt: true,
               startedAt: true,
               completedAt: true,
-              worker: {
-                select: {
-                  id: true,
-                  name: true,
-                  location: true,
-                },
-              },
+              worker: { select: { id: true, name: true, location: true } },
             },
           },
-        },
-      }),
-      prisma.property.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 4,
-        select: {
-          id: true,
-          name: true,
-          propertyCode: true,
-          address: true,
-          client: { select: { id: true, name: true } },
-          _count: { select: { incidents: true, assets: true } },
         },
       }),
     ]);
@@ -175,28 +109,15 @@ export async function GET(request) {
       criticalIncidents,
       incidentStatusCounts: statusCounts,
       totalIncidents,
+      totalResidents,
       totalClients,
       totalProperties,
       recentIncidents,
-      recentProperties,
-      pagination: {
-        page,
-        limit,
-        total: totalIncidents,
-        totalPages,
-      },
+      pagination: { page, limit, total: totalIncidents, totalPages },
     });
   } catch (error) {
     console.error("Dashboard API error:", error);
-
-    return Response.json(
-      {
-        error: "Failed to load dashboard statistics",
-      },
-      {
-        status: 500,
-      }
-    );
+    return Response.json({ error: "Failed to load dashboard statistics" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

@@ -138,10 +138,9 @@ export default function JobDetailPage() {
                 </div>
                 <div><p className="text-xs text-slate-500">Severity / Priority</p><p className="mt-1"><Badge tone={wo.priority === "CRITICAL" || wo.priority === "HIGH" ? "red" : wo.priority === "MEDIUM" ? "amber" : "slate"}>{wo.priority}</Badge> {inc?.severity && <span className="ml-2 text-xs text-slate-500">Incident severity: {inc.severity}</span>}</p></div>
                 <div><p className="text-xs text-slate-500">SLA</p><p className="text-white">{wo.slaHours} hours</p></div>
-                <div><p className="text-xs text-slate-500">Client</p><p className="text-white">{inc?.client?.name || "—"} {inc?.client?.companyName ? `· ${inc.client.companyName}` : ""}</p></div>
-                <div><p className="text-xs text-slate-500">Property</p><p className="text-white">{inc?.property ? `${inc.property.name} (${inc.property.propertyCode})` : "—"} </p><p className="text-xs text-slate-500">{inc?.property?.address || ""}</p></div>
-                <div><p className="text-xs text-slate-500">Asset</p><p className="text-white">{inc?.asset ? `${inc.asset.name} · ${inc.asset.assetCode}` : "—"}</p><p className="text-xs text-slate-500">{inc?.asset?.location || ""}</p></div>
+                <div><p className="text-xs text-slate-500">Resident</p><p className="text-white">{inc?.resident ? `${inc.resident.name} · ${inc.resident.building}, ${inc.resident.apartment}` : inc?.reporterName || "—"}</p><p className="text-xs text-slate-500">{inc?.resident?.phone || inc?.reporterPhone || ""} {inc?.resident?.email ? `· ${inc.resident.email}` : ""}</p></div>
                 <div><p className="text-xs text-slate-500">Location</p><p className="text-white">{inc?.location || wo.description}</p></div>
+                <div><p className="text-xs text-slate-500">Asset</p><p className="text-white">{inc?.asset ? `${inc.asset.name} · ${inc.asset.assetCode}` : "—"}</p><p className="text-xs text-slate-500">{inc?.asset?.location || ""}</p></div>
                 <div className="sm:col-span-2 rounded-lg border border-sky-900/50 bg-sky-950/20 p-3">
                   <p className="text-xs font-semibold text-sky-300">AI Recommended Action</p>
                   <p className="mt-1 text-sm text-white">{wo.action}</p>

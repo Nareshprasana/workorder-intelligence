@@ -19,6 +19,7 @@ export async function GET(request, { params }) {
           include: {
             incident: {
               include: {
+                resident: { select: { id: true, name: true, apartment: true, building: true, phone: true, email: true } },
                 client: { select: { id: true, name: true, companyName: true } },
                 property: { select: { id: true, name: true, propertyCode: true, address: true } },
                 asset: { select: { id: true, assetCode: true, name: true, category: true, location: true } },

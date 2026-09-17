@@ -9,27 +9,22 @@ const navSections = [
     items: [{ name: "Dashboard", href: "/", icon: "◈" }],
   },
   {
-    label: "CUSTOMERS",
+    label: "PEOPLE",
     items: [
-      { name: "Clients", href: "/clients", icon: "◉" },
-      { name: "Properties", href: "/properties", icon: "⬣" },
+      { name: "Residents", href: "/residents", icon: "◉" },
+      { name: "Workers", href: "/workers", icon: "◎" },
     ],
   },
   {
     label: "OPERATIONS",
     items: [
-      { name: "Incidents", href: "/incidents", icon: "⚑" },
-      { name: "Work Orders", href: "/work-orders", icon: "⧉" },
-      { name: "Workers", href: "/workers", icon: "◎" },
-      { name: "Assets", href: "/assets", icon: "⬢" },
+      { name: "Complaints", href: "/incidents", icon: "⚑" },
+      { name: "Work Requests", href: "/work-orders", icon: "⧉" },
     ],
   },
   {
-    label: "INTELLIGENCE",
-    items: [
-      { name: "AI Analysis", href: "/ai", icon: "✦" },
-      { name: "SOPs", href: "/sops", icon: "≡" },
-    ],
+    label: "AI",
+    items: [{ name: "AI Analysis", href: "/ai", icon: "✦" }],
   },
   {
     label: "SYSTEM",
@@ -99,18 +94,17 @@ export default function Sidebar({ open, onClose }) {
           <p className="mt-1 text-xs text-slate-500">All systems operational</p>
         </div>
         <p className="mt-3 px-1 text-xs text-slate-600">v1.0 · Demo Operations</p>
+        <p className="mt-1 px-1 text-xs text-slate-600">Production would add authenticated resident and worker accounts with role-based authorization.</p>
       </div>
     </div>
   );
 
   return (
     <>
-      {/* Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-slate-800 lg:bg-slate-950">
         {content}
       </aside>
 
-      {/* Mobile drawer */}
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} />

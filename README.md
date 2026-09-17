@@ -39,27 +39,15 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 This prototype demonstrates server-side ownership validation without a full authentication system.
 
-**Client → Property → Asset → Incident chain**
+**Resident → Complaint → AI → Work Request → Worker**
 
-- Every `Incident` must belong to a `Property` (`propertyId` required) and a `Client` (`clientId` required).
-- `Property` must belong to the supplied `Client` (`property.clientId === client.id`). Cross-client property access is rejected with `403`.
-- `Asset` (via `assetCode`) if supplied must belong to the selected `Property` (`asset.propertyId === property.id`). Cross-property asset access is rejected with `403`.
-- `Client.status` must be `ACTIVE`. `INACTIVE` clients cannot submit complaints (`403`).
-- Unknown `clientId` or `propertyId` returns `404`; missing fields return `400`.
+- Every `Complaint` (Incident) must belong to an `ACTIVE` Resident (`residentId` required). Inactive residents cannot submit complaints (`403`).
+- `Asset` (via `assetCode`) if supplied is validated server-side.
+- Worker assignment is deterministic: `AVAILABLE` + required skill + location preference. No AI worker selection.
+- Worker actions (`accept`/`reject`/`complete`) verify `workOrder.workerId === workerId` server-side (403 otherwise). A worker cannot act on another worker's work.
+- Legacy `Client → Property` chain is retained in the database for backward compatibility but is no longer part of the product UI.
 
-```json
-// Valid
-{ "clientId": "client_A", "propertyId": "prop_A (belongs to client_A)", "assetId": "AC-B4-401 (belongs to prop_A)" } → 201
-
-// Invalid
-{ "clientId": "client_A", "propertyId": "prop_B (belongs to client_B)" } → 403
-{ "propertyId": "prop_A", "assetId": "AC-C2-201 (belongs to prop_C)" } → 403
-```
-
-- Raw `assetId`/`assetCode` alone is **not** sufficient to create an incident.
-- `propertyCode` (e.g. `PROP-BLOCK-B-001`) is a public **identifier**, not an authentication credential. Knowing a code does not prove ownership.
-- The new `/complaints/new` UI enforces this by cascading selects: Client → Property → Asset (only assets of the selected property are listed).
-- Production would add authenticated client accounts and session-based authorization (e.g. NextAuth, JWT) and enforce `request.user.clientId` server-side instead of trusting `clientId` from the request body. Property codes would remain identifiers with access checked against the authenticated session.
+Production would add authenticated resident and worker accounts with role-based authorization.
 
 **Other hardening (prototype level):**
 - Request bodies validated, relationships verified server-side, safe error messages, no stack-trace leakage, no trust in client-provided ownership claims.

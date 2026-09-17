@@ -80,8 +80,8 @@ export default function IncidentsPage() {
       <Reveal>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Incidents</h1>
-            <p className="text-sm text-slate-400">All maintenance incidents with AI triage</p>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Complaints</h1>
+            <p className="text-sm text-slate-400">Resident complaints with AI triage → Work Requests</p>
           </div>
           <Link href="/complaints/new" className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-[0_3px_0_0_rgb(15_23_42)] hover:-translate-y-0.5 active:translate-y-0 transition-all">
             + New Complaint
@@ -127,10 +127,10 @@ export default function IncidentsPage() {
                   incidents.map((inc) => (
                     <tr key={inc.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="max-w-xs px-4 py-3">
-                        <Link href={`/incidents/${inc.id}`} className="block hover:opacity-80">
+                        <Link href={`/complaints/${inc.id}`} className="block hover:opacity-80">
                           <p className="truncate font-medium text-white hover:text-sky-300">{inc.description}</p>
-                          <p className="truncate text-xs text-slate-500">{inc.client?.name || "No client"} → {inc.property?.name || "No property"} {inc.asset?.assetCode ? `· ${inc.asset.assetCode}` : ""}</p>
-                          <p className="truncate text-xs text-slate-500">{inc.reporterName ? `Reporter: ${inc.reporterName}` : "No reporter"} · {inc.issue || "—"}</p>
+                          <p className="truncate text-xs text-slate-500">{inc.resident ? `${inc.resident.name} · ${inc.resident.building}, ${inc.resident.apartment}` : inc.reporterName ? `Reporter: ${inc.reporterName}` : "No resident"} {inc.asset?.assetCode ? `· ${inc.asset.assetCode}` : ""}</p>
+                          <p className="truncate text-xs text-slate-500">{inc.issue || "—"}</p>
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-400">{inc.category || "—"}</td>

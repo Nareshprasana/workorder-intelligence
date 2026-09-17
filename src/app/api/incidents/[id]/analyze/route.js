@@ -1,6 +1,12 @@
 import { PrismaClient } from "../../../../../generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { analyzeMaintenanceComplaint } from "../../../../../lib/ai";
+import {
+  getPriorityForSeverity,
+  getSlaHoursForPriority,
+  findEligibleWorker,
+  buildNotificationMessage,
+} from "../../../../../lib/work-order-rules";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL,
@@ -21,25 +27,21 @@ export async function POST(request, { params }) {
 
     const incident = await prisma.incident.findUnique({
       where: { id },
-      include: { asset: true },
+      include: { asset: true, workOrder: true },
     });
 
     if (!incident) {
       return Response.json({ error: "Incident not found." }, { status: 404 });
     }
 
-    // Duplicate protection: if already ANALYZING and not a retry, return current
     if (incident.status === "ANALYZING" && !isRetry) {
       return Response.json({ success: true, status: "ANALYZING", incident, message: "Analysis already in progress." });
     }
 
-    // If already READY or NEEDS_INFORMATION and not a retry, do not re-run
     if ((incident.status === "READY" || incident.status === "NEEDS_INFORMATION") && !isRetry) {
       return Response.json({ success: true, status: incident.status, incident, message: "Analysis already completed." });
     }
 
-    // For NEW or retry, set ANALYZING before calling Gemini
-    // Also for ANALYZING+retry, ensure status is ANALYZING
     await prisma.incident.update({
       where: { id: incident.id },
       data: { status: "ANALYZING" },
@@ -54,8 +56,7 @@ export async function POST(request, { params }) {
       });
     } catch (aiError) {
       console.error("Gemini analysis failed for incident", incident.id, aiError?.message);
-      // Keep incident as ANALYZING, do not delete, return safe error
-      const current = await prisma.incident.findUnique({ where: { id: incident.id }, include: { asset: true, client: true, property: true } });
+      const current = await prisma.incident.findUnique({ where: { id: incident.id }, include: { asset: true, resident: true, workOrder: true } });
       return Response.json(
         {
           success: false,
@@ -78,18 +79,59 @@ export async function POST(request, { params }) {
         aiAnalysis: JSON.stringify(analysis),
         status: analysis.missingInformation.length > 0 ? "NEEDS_INFORMATION" : "READY",
       },
-      include: { asset: true, client: true, property: true },
+      include: { asset: true, resident: true, client: true, property: true, workOrder: true },
     });
+
+    // Auto-create Work Request when READY (simple product workflow)
+    let workOrder = null;
+    let notification = null;
+    if (updatedIncident.status === "READY" && !updatedIncident.workOrder) {
+      const priority = getPriorityForSeverity(updatedIncident.severity);
+      const slaHours = getSlaHoursForPriority(priority);
+      const workers = await prisma.worker.findMany();
+      // Use incident for eligibility (category + location)
+      const eligibleWorker = findEligibleWorker(workers, updatedIncident);
+      workOrder = await prisma.workOrder.create({
+        data: {
+          incidentId: updatedIncident.id,
+          workerId: eligibleWorker ? eligibleWorker.id : null,
+          priority,
+          slaHours,
+          description: updatedIncident.description,
+          action: updatedIncident.recommendedAction || updatedIncident.issue || "Follow SOP for inspection",
+          status: eligibleWorker ? "ASSIGNED" : "PENDING",
+          assignedAt: eligibleWorker ? new Date() : null,
+        },
+        include: { worker: true, incident: true },
+      });
+      if (eligibleWorker) {
+        const message = buildNotificationMessage({
+          priority,
+          location: updatedIncident.location,
+          issue: updatedIncident.issue,
+        });
+        notification = await prisma.notification.create({
+          data: {
+            workerId: eligibleWorker.id,
+            workOrderId: workOrder.id,
+            title: "New Work Request",
+            message,
+            status: "UNREAD",
+          },
+        });
+      }
+    }
 
     return Response.json({
       success: true,
       incident: updatedIncident,
       analysis,
       status: updatedIncident.status,
+      workOrder,
+      notification,
     });
   } catch (error) {
     console.error("Incident AI analysis error:", error);
-    // Avoid exposing internal details; if incident still exists, keep it
     return Response.json(
       {
         success: false,

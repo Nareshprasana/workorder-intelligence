@@ -26,6 +26,7 @@ export async function GET(request) {
         worker: { select: { id: true, name: true, location: true, status: true } },
         incident: {
           include: {
+            resident: { select: { id: true, name: true, apartment: true, building: true } },
             client: { select: { id: true, name: true } },
             property: { select: { id: true, name: true, propertyCode: true, address: true } },
             asset: { select: { id: true, assetCode: true, name: true, location: true } },

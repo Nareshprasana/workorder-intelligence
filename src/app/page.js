@@ -65,13 +65,10 @@ export default function OverviewPage() {
   const criticalIncidents = dashboard?.criticalIncidents || 0;
   const activeWorkOrders = dashboard?.activeWorkOrders ?? ((dashboard?.pending ?? 0) + (dashboard?.assigned ?? 0) + (dashboard?.inProgress ?? 0));
   const availableWorkers = workersData?.counts?.available ?? 0;
-  const totalClients = dashboard?.totalClients ?? 0;
-  const totalProperties = dashboard?.totalProperties ?? 0;
-  const recentProperties = dashboard?.recentProperties || [];
+  const totalResidents = dashboard?.totalResidents ?? 0;
 
   const recentIncidents = dashboard?.recentIncidents || [];
   const workerCounts = workersData?.counts || { available: 0, busy: 0, offline: 0, total: 0 };
-  const workers = workersData?.workers || [];
 
   async function handleCreateWorkOrder(id) {
     setCreatingId(id);
@@ -109,12 +106,11 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* Greeting */}
       <Reveal>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Maintenance Operations</h1>
-            <p className="mt-1 text-sm text-slate-400">Real-time intelligence across incidents, work orders and field operations.</p>
+            <p className="mt-1 text-sm text-slate-400">Resident → Complaint → AI → Work Request → Worker → Complete</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-full border border-emerald-900/50 bg-emerald-950/30 px-3 py-1.5">
@@ -129,99 +125,22 @@ export default function OverviewPage() {
         </div>
       </Reveal>
 
-      {/* Summary Metrics - 6 cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Reveal delay={30}>
-          <MetricCard
-            label="Total Clients"
-            value={totalClients}
-            sublabel={`${totalProperties} properties`}
-            accent="slate"
-            icon={<span className="text-sm">◉</span>}
-          />
-        </Reveal>
-        <Reveal delay={60}>
-          <MetricCard
-            label="Total Properties"
-            value={totalProperties}
-            sublabel={`${totalClients} clients`}
-            accent="slate"
-            icon={<span className="text-sm">⬣</span>}
-          />
-        </Reveal>
-        <Reveal delay={90}>
-          <MetricCard
-            label="Open Incidents"
-            value={openIncidents}
-            sublabel={`${totalIncidents} total incidents`}
-            accent="amber"
-            icon={<span className="text-sm">◈</span>}
-          />
-        </Reveal>
-        <Reveal delay={120}>
-          <MetricCard
-            label="Critical Incidents"
-            value={criticalIncidents}
-            sublabel="Requires immediate attention"
-            accent="red"
-            icon={<span className="text-sm">⚠</span>}
-          />
-        </Reveal>
-        <Reveal delay={150}>
-          <MetricCard
-            label="Active Work Orders"
-            value={activeWorkOrders}
-            sublabel={`${dashboard?.pending || 0} pending · ${dashboard?.assigned || 0} assigned`}
-            accent="blue"
-            icon={<span className="text-sm">⧉</span>}
-          />
-        </Reveal>
-        <Reveal delay={180}>
-          <MetricCard
-            label="Available Workers"
-            value={availableWorkers}
-            sublabel={`${workerCounts.total} total workers`}
-            accent="emerald"
-            icon={<span className="text-sm">◎</span>}
-          />
-        </Reveal>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Reveal delay={30}><MetricCard label="Total Residents" value={totalResidents} sublabel={`${totalIncidents} complaints`} accent="slate" icon={<span className="text-sm">◉</span>} /></Reveal>
+        <Reveal delay={60}><MetricCard label="Total Workers" value={workerCounts.total} sublabel={`${availableWorkers} available`} accent="emerald" icon={<span className="text-sm">◎</span>} /></Reveal>
+        <Reveal delay={90}><MetricCard label="Open Complaints" value={openIncidents} sublabel={`${totalIncidents} total`} accent="amber" icon={<span className="text-sm">◈</span>} /></Reveal>
+        <Reveal delay={120}><MetricCard label="Critical Complaints" value={criticalIncidents} sublabel="Requires immediate attention" accent="red" icon={<span className="text-sm">⚠</span>} /></Reveal>
       </div>
 
-      {/* Properties & Clients - recent operational relationships */}
-      <Reveal>
-        <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-white">Properties & Clients</h2>
-              <p className="text-xs text-slate-500">Recent properties · Client → Property → Asset → Incident chain</p>
-            </div>
-            <div className="flex gap-2">
-              <Link href="/clients" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800">View Clients</Link>
-              <Link href="/properties" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800">View Properties</Link>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {recentProperties.length === 0 ? (
-              <p className="col-span-full py-4 text-center text-xs text-slate-500">No properties.</p>
-            ) : (
-              recentProperties.map((p) => (
-                <Link key={p.id} href={`/properties/${p.id}`} className="rounded-lg border border-slate-800 bg-slate-950 p-3 hover:border-slate-700 hover:bg-slate-900 transition">
-                  <p className="text-sm font-medium text-white truncate">{p.name}</p>
-                  <p className="text-xs font-mono text-slate-500">{p.propertyCode}</p>
-                  <p className="text-xs text-slate-400 truncate">{p.client?.name}</p>
-                  <p className="mt-1 text-xs text-slate-500">{p._count?.assets ?? 0} assets · {p._count?.incidents ?? 0} incidents</p>
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
-      </Reveal>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+        <Reveal><MetricCard label="Active Work Requests" value={activeWorkOrders} sublabel={`${dashboard?.pending || 0} pending · ${dashboard?.assigned || 0} assigned`} accent="blue" icon={<span className="text-sm">⧉</span>} /></Reveal>
+        <Reveal delay={30}><MetricCard label="Available Workers" value={availableWorkers} sublabel={`${workerCounts.busy} busy · ${workerCounts.offline} offline`} accent="emerald" icon={<span className="text-sm">◎</span>} /></Reveal>
+      </div>
 
-      {/* Operations Overview */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Reveal>
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-700">
-            <h2 className="text-sm font-semibold text-white">Incident Activity</h2>
+            <h2 className="text-sm font-semibold text-white">Complaint Activity</h2>
             <p className="text-xs text-slate-500">Distribution by status</p>
             <div className="mt-5 space-y-3">
               {[
@@ -277,40 +196,38 @@ export default function OverviewPage() {
             </div>
             <div className="mt-6 flex gap-2">
               <ThreeDButton href="/workers" variant="secondary" className="flex-1 justify-center">View Workers</ThreeDButton>
-              <ThreeDButton href="/workers/new" variant="primary" className="flex-1 justify-center">Add Worker</ThreeDButton>
+              <ThreeDButton href="/residents" variant="primary" className="flex-1 justify-center">View Residents</ThreeDButton>
             </div>
           </div>
         </Reveal>
       </div>
 
-      {/* AI → Operations workflow */}
       <Reveal>
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold tracking-widest text-slate-500">AI → OPERATIONS FLOW</p>
-            <p className="text-xs text-slate-600">AI understands · Rules decide · Workers execute</p>
+            <p className="text-xs font-semibold tracking-widest text-slate-500">RESIDENT → AI → WORKER FLOW</p>
+            <p className="text-xs text-slate-600">Complaint stored → AI analyzes → Work request → Worker completes</p>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-            {["AI Intelligence", "Validation", "Deterministic Rules", "Worker Assignment", "Work Order"].map((step, i) => (
+            {["Resident", "Complaint", "AI Analysis", "Work Request", "Worker", "Complete"].map((step, i) => (
               <div key={step} className="flex items-center gap-2">
-                <span className={`rounded-full border px-3 py-1 font-medium ${i < 2 ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : "border-slate-700 bg-slate-800 text-slate-300"}`}>
+                <span className={`rounded-full border px-3 py-1 font-medium ${i < 3 ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : "border-slate-700 bg-slate-800 text-slate-300"}`}>
                   {step}
                 </span>
-                {i < 4 && <span className="text-slate-600">→</span>}
+                {i < 5 && <span className="text-slate-600">→</span>}
               </div>
             ))}
           </div>
         </div>
       </Reveal>
 
-      {/* Recent Incidents & Active Work Orders */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Reveal className="lg:col-span-2">
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-white">Recent Incidents</h2>
-                <p className="text-xs text-slate-500">Latest 5 incidents</p>
+                <h2 className="text-sm font-semibold text-white">Recent Complaints</h2>
+                <p className="text-xs text-slate-500">Latest 5 complaints</p>
               </div>
               <Link href="/incidents" className="text-xs font-medium text-slate-300 hover:text-white transition-colors">
                 View all →
@@ -323,42 +240,36 @@ export default function OverviewPage() {
             )}
             <div className="mt-4 space-y-2">
               {recentIncidents.map((incident) => (
-                <div key={incident.id} className="group flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3 transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-900">
+                <Link key={incident.id} href={`/complaints/${incident.id}`} className="group flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3 transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-900">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-white">{incident.description}</p>
+                    <p className="truncate text-sm font-medium text-white">{incident.resident?.name || incident.reporterName || "Unknown Resident"}</p>
+                    <p className="truncate text-sm text-slate-300">{incident.issue || incident.description}</p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {incident.category && <span className="rounded-full border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-xs text-slate-400">{incident.category}</span>}
                       {incident.severity && <SeverityBadge severity={incident.severity} />}
                       <StatusBadge status={incident.status} />
                     </div>
                     <p className="mt-1 truncate text-xs text-slate-500">
-                      {incident.client?.name ? `${incident.client.name} → ` : ""}{incident.property?.name || incident.property?.propertyCode || "No property"} {incident.asset?.assetCode ? `· ${incident.asset.assetCode}` : ""} {incident.reporterName ? `· ${incident.reporterName}` : ""}
+                      {incident.resident ? `${incident.resident.building}, ${incident.resident.apartment}` : incident.location} {incident.asset?.assetCode ? `· ${incident.asset.assetCode}` : ""} · {new Date(incident.createdAt).toLocaleDateString()}
                     </p>
-                    <p className="mt-1 truncate text-xs text-slate-500">{incident.location} · {new Date(incident.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {incident.status === "READY" && !incident.workOrder ? (
-                      <button
-                        onClick={() => handleCreateWorkOrder(incident.id)}
-                        disabled={creatingId === incident.id}
-                        className="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-slate-900 hover:bg-slate-200 disabled:opacity-50 shadow-[0_2px_0_0_rgb(15_23_42)] hover:-translate-y-0.5 active:translate-y-0 transition-all"
-                      >
-                        {creatingId === incident.id ? "..." : "Create"}
-                      </button>
+                      <span className="text-xs text-emerald-400">Ready</span>
                     ) : incident.workOrder ? (
                       <div className="text-right">
-                        {incident.workOrder.status === "PENDING" && <span className="text-xs font-medium text-amber-400">Awaiting worker assignment</span>}
+                        {incident.workOrder.status === "PENDING" && <span className="text-xs font-medium text-amber-400">Awaiting worker</span>}
                         {incident.workOrder.status === "ASSIGNED" && incident.workOrder.worker && <span className="text-xs font-medium text-sky-300">Assigned to {incident.workOrder.worker.name}</span>}
                         {incident.workOrder.status === "IN_PROGRESS" && incident.workOrder.worker && <span className="text-xs font-medium text-blue-300">{incident.workOrder.worker.name} is working</span>}
                         {incident.workOrder.status === "COMPLETED" && incident.workOrder.worker && <span className="text-xs font-medium text-emerald-400">Completed by {incident.workOrder.worker.name}</span>}
-                        {incident.workOrder.worker && <Link href={`/workers/${incident.workOrder.worker.id}`} className="block text-xs text-slate-500 hover:text-slate-300">{incident.workOrder.status}</Link>}
-                        {!incident.workOrder.worker && incident.workOrder.status !== "PENDING" && <span className="text-xs text-slate-500">{incident.workOrder.status}</span>}
                       </div>
-                    ) : null}
+                    ) : (
+                      <span className="text-xs text-slate-500">{incident.status}</span>
+                    )}
                   </div>
-                </div>
+                </Link>
               ))}
-              {recentIncidents.length === 0 && <p className="py-6 text-center text-sm text-slate-500">No incidents yet.</p>}
+              {recentIncidents.length === 0 && <p className="py-6 text-center text-sm text-slate-500">No complaints yet.</p>}
             </div>
           </div>
         </Reveal>
@@ -368,34 +279,33 @@ export default function OverviewPage() {
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">Active Work Orders</h2>
-                  <p className="text-xs text-slate-500">{dashboard?.activeWorkOrders || 0} active</p>
+                  <h2 className="text-sm font-semibold text-white">Active Work Requests</h2>
+                  <p className="text-xs text-slate-500">{activeWorkOrders} active</p>
                 </div>
                 <Link href="/work-orders" className="text-xs font-medium text-slate-300 hover:text-white">View all →</Link>
               </div>
               <div className="mt-4 space-y-2">
-                {(dashboard?.recentIncidents || []).filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).slice(0, 3).map((incident) => {
+                {recentIncidents.filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).slice(0, 3).map((incident) => {
                   const wo = incident.workOrder;
                   let assignmentLabel = "Awaiting worker assignment";
                   if (wo.status === "PENDING") assignmentLabel = "Awaiting worker assignment";
                   else if (wo.status === "ASSIGNED" && wo.worker) assignmentLabel = `Assigned to ${wo.worker.name}`;
                   else if (wo.status === "IN_PROGRESS" && wo.worker) assignmentLabel = `${wo.worker.name} is working`;
                   else if (wo.status === "COMPLETED" && wo.worker) assignmentLabel = `Completed by ${wo.worker.name}`;
-                  else if (wo.worker) assignmentLabel = `${wo.worker.name} · ${wo.status}`;
                   return (
                     <div key={wo.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3 transition hover:border-slate-700">
                       <p className="truncate text-sm font-medium text-white">{incident.issue || incident.description}</p>
-                      <p className="truncate text-xs text-slate-400">{wo.priority} · {incident.location} {incident.asset?.assetCode ? `· ${incident.asset.assetCode}` : ""}</p>
+                      <p className="truncate text-xs text-slate-400">{incident.resident?.name} · {incident.location}</p>
                       <p className={`mt-1 text-xs font-medium ${wo.status === "PENDING" ? "text-amber-400" : wo.status === "IN_PROGRESS" ? "text-blue-300" : "text-emerald-300"}`}>{assignmentLabel}</p>
                       <div className="mt-2 flex items-center gap-2">
                         <span className={`rounded-full border px-1.5 py-0.5 text-xs ${wo.status === "IN_PROGRESS" ? "border-blue-900 bg-blue-950 text-blue-300" : wo.status === "ASSIGNED" ? "border-sky-900 bg-sky-950 text-sky-300" : "border-amber-900 bg-amber-950 text-amber-300"}`}>Status: {wo.status}</span>
-                        <span className="text-xs text-slate-500">SLA {wo.slaHours}h</span>
+                        <span className="text-xs text-slate-500">SLA {wo.slaHours}h · {wo.priority}</span>
                       </div>
                     </div>
                   );
                 })}
-                {(!dashboard || (dashboard.recentIncidents || []).filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).length === 0) && (
-                  <p className="py-4 text-center text-xs text-slate-500">No active work orders.</p>
+                {(!recentIncidents || recentIncidents.filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).length === 0) && (
+                  <p className="py-4 text-center text-xs text-slate-500">No active work requests.</p>
                 )}
               </div>
             </div>
@@ -415,7 +325,7 @@ export default function OverviewPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-slate-200 truncate">
-                          {isAnalyzing ? "AI analyzing..." : inc.status === "READY" ? "AI analysis complete — ready for work order" : inc.status === "NEEDS_INFORMATION" ? "AI needs more information" : inc.severity === "CRITICAL" ? "Critical incident detected" : inc.severity === "HIGH" ? "High severity identified" : "Complaint analyzed"}
+                          {isAnalyzing ? "AI analyzing..." : inc.status === "READY" ? "AI analysis complete — ready" : inc.status === "NEEDS_INFORMATION" ? "AI needs more information" : "Complaint analyzed"}
                         </p>
                         <p className="truncate text-xs text-slate-500">{isAnalyzing ? "Analyzing complaint..." : `${inc.issue || inc.category} · ${inc.confidence ? `${Math.round(inc.confidence*100)}% confidence` : "analyzed"}`}</p>
                       </div>

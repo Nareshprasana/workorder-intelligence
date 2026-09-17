@@ -276,7 +276,7 @@ export default function WorkerPage() {
             <div className="mt-2">
               <p className="text-sm font-semibold text-white">{currentJob.incident?.issue || currentJob.description.slice(0, 60)}</p>
               <p className="mt-1 text-xs text-slate-400">
-                {currentJob.incident?.property?.name || currentJob.incident?.location} {currentJob.incident?.asset?.assetCode ? `· ${currentJob.incident.asset.assetCode}` : ""} {currentJob.incident?.location ? `· ${currentJob.incident.location}` : ""}
+                Resident: {currentJob.incident?.resident?.name || "—"} · {currentJob.incident?.resident ? `${currentJob.incident.resident.building}, ${currentJob.incident.resident.apartment}` : currentJob.incident?.location} {currentJob.incident?.asset?.assetCode ? `· ${currentJob.incident.asset.assetCode}` : ""}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <PriorityBadge priority={currentJob.priority} />
@@ -417,12 +417,12 @@ export default function WorkerPage() {
                           <p className="text-sm font-medium text-white line-clamp-1 group-hover:text-sky-200">{wo.incident?.issue || wo.description.slice(0, 40)}</p>
                           <WoStatusBadge status={wo.status} />
                         </div>
-                        <p className="mt-1 text-xs text-slate-400 truncate">{wo.incident?.property?.name || wo.incident?.location} {wo.incident?.asset?.assetCode ? `· ${wo.incident.asset.assetCode}` : ""}</p>
+                        <p className="mt-1 text-xs text-slate-400 truncate">Resident: {wo.incident?.resident?.name || "—"} · {wo.incident?.resident ? `${wo.incident.resident.building}, ${wo.incident.resident.apartment}` : wo.incident?.location}</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           <PriorityBadge priority={wo.priority} />
                           <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-400">SLA {wo.slaHours}h</span>
                         </div>
-                        <p className="mt-2 text-xs text-slate-500 line-clamp-1">WO: {wo.id.slice(0, 8)} · Incident: {wo.incidentId.slice(0, 8)}</p>
+                        <p className="mt-2 text-xs text-slate-500 line-clamp-1">WO: {wo.id.slice(0, 8)} · Complaint: {wo.incidentId.slice(0, 8)}</p>
                         <div className="mt-3 flex gap-2">
                           <span className="rounded-lg bg-white px-3 py-1 text-xs font-medium text-slate-900 group-hover:bg-slate-100">View Job</span>
                         </div>
@@ -448,7 +448,7 @@ export default function WorkerPage() {
                           <p className="text-sm font-medium text-white line-clamp-1">{wo.incident?.issue || wo.description.slice(0, 40)}</p>
                           <WoStatusBadge status={wo.status} />
                         </div>
-                        <p className="mt-1 text-xs text-slate-400 truncate">{wo.incident?.property?.name || wo.incident?.location} {wo.incident?.asset?.assetCode ? `· ${wo.incident.asset.assetCode}` : ""}</p>
+                        <p className="mt-1 text-xs text-slate-400 truncate">Resident: {wo.incident?.resident?.name || "—"} · {wo.incident?.location}</p>
                         <div className="mt-2 flex gap-1.5">
                           <PriorityBadge priority={wo.priority} />
                           <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-400">SLA {wo.slaHours}h</span>
@@ -479,7 +479,7 @@ export default function WorkerPage() {
                           <p className="text-sm font-medium text-white line-clamp-1">{wo.incident?.issue || wo.description.slice(0, 40)}</p>
                           <WoStatusBadge status={wo.status} />
                         </div>
-                        <p className="mt-1 text-xs text-slate-400 truncate">{wo.incident?.property?.name || wo.incident?.location} {wo.incident?.asset?.assetCode ? `· ${wo.incident.asset.assetCode}` : ""}</p>
+                        <p className="mt-1 text-xs text-slate-400 truncate">Resident: {wo.incident?.resident?.name || "—"} · {wo.incident?.location}</p>
                         <div className="mt-2 flex gap-1.5">
                           <PriorityBadge priority={wo.priority} />
                           <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-400">SLA {wo.slaHours}h</span>

@@ -10,6 +10,7 @@ export async function GET(request, { params }) {
     const incident = await prisma.incident.findUnique({
       where: { id },
       include: {
+        resident: { select: { id: true, name: true, apartment: true, building: true, email: true, phone: true } },
         client: { select: { id: true, name: true, companyName: true, email: true, phone: true } },
         property: { select: { id: true, name: true, propertyCode: true, address: true } },
         asset: { select: { id: true, assetCode: true, name: true, category: true, location: true } },
