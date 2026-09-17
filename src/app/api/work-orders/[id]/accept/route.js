@@ -10,6 +10,13 @@ const prisma = new PrismaClient({ adapter });
 export async function POST(request, { params }) {
   try {
     const { id } = await params;
+    let body = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+    const callerWorkerId = body.workerId ? String(body.workerId).trim() : null;
 
     const workOrder = await prisma.workOrder.findUnique({
       where: { id },
@@ -22,6 +29,10 @@ export async function POST(request, { params }) {
 
     if (!workOrder.workerId) {
       return Response.json({ error: "Work order is not assigned to a worker." }, { status: 400 });
+    }
+
+    if (callerWorkerId && workOrder.workerId !== callerWorkerId) {
+      return Response.json({ error: "You are not authorized to accept this work order." }, { status: 403 });
     }
 
     if (workOrder.status !== "ASSIGNED") {
@@ -40,13 +51,10 @@ export async function POST(request, { params }) {
       include: { worker: true, incident: true },
     });
 
-    // Mark worker as BUSY
-    if (workOrder.workerId) {
-      await prisma.worker.update({
-        where: { id: workOrder.workerId },
-        data: { status: "BUSY" },
-      });
-    }
+    await prisma.worker.update({
+      where: { id: workOrder.workerId },
+      data: { status: "BUSY" },
+    });
 
     return Response.json({ success: true, workOrder: updated });
   } catch (error) {

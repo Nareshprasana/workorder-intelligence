@@ -18,14 +18,10 @@ export async function GET(request, { params }) {
           orderBy: { createdAt: "desc" },
           include: {
             incident: {
-              select: {
-                id: true,
-                description: true,
-                location: true,
-                category: true,
-                issue: true,
-                severity: true,
-                status: true,
+              include: {
+                client: { select: { id: true, name: true, companyName: true } },
+                property: { select: { id: true, name: true, propertyCode: true, address: true } },
+                asset: { select: { id: true, assetCode: true, name: true, category: true, location: true } },
               },
             },
           },

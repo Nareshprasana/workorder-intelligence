@@ -345,10 +345,15 @@ export default function OverviewPage() {
                       >
                         {creatingId === incident.id ? "..." : "Create"}
                       </button>
-                    ) : incident.workOrder?.worker ? (
-                      <span className="text-xs text-emerald-400">{incident.workOrder.worker.name}</span>
                     ) : incident.workOrder ? (
-                      <span className="text-xs text-amber-400">Pending</span>
+                      <div className="text-right">
+                        {incident.workOrder.status === "PENDING" && <span className="text-xs font-medium text-amber-400">Awaiting worker assignment</span>}
+                        {incident.workOrder.status === "ASSIGNED" && incident.workOrder.worker && <span className="text-xs font-medium text-sky-300">Assigned to {incident.workOrder.worker.name}</span>}
+                        {incident.workOrder.status === "IN_PROGRESS" && incident.workOrder.worker && <span className="text-xs font-medium text-blue-300">{incident.workOrder.worker.name} is working</span>}
+                        {incident.workOrder.status === "COMPLETED" && incident.workOrder.worker && <span className="text-xs font-medium text-emerald-400">Completed by {incident.workOrder.worker.name}</span>}
+                        {incident.workOrder.worker && <Link href={`/workers/${incident.workOrder.worker.id}`} className="block text-xs text-slate-500 hover:text-slate-300">{incident.workOrder.status}</Link>}
+                        {!incident.workOrder.worker && incident.workOrder.status !== "PENDING" && <span className="text-xs text-slate-500">{incident.workOrder.status}</span>}
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -369,16 +374,26 @@ export default function OverviewPage() {
                 <Link href="/work-orders" className="text-xs font-medium text-slate-300 hover:text-white">View all →</Link>
               </div>
               <div className="mt-4 space-y-2">
-                {(dashboard?.recentIncidents || []).filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).slice(0, 3).map((incident) => (
-                  <div key={incident.workOrder.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3 transition hover:border-slate-700">
-                    <p className="truncate text-sm font-medium text-white">{incident.workOrder.worker?.name || "Unassigned"}</p>
-                    <p className="truncate text-xs text-slate-400">{incident.issue || incident.description}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className={`rounded-full border px-1.5 py-0.5 text-xs ${incident.workOrder.status === "IN_PROGRESS" ? "border-blue-900 bg-blue-950 text-blue-300" : incident.workOrder.status === "ASSIGNED" ? "border-sky-900 bg-sky-950 text-sky-300" : "border-amber-900 bg-amber-950 text-amber-300"}`}>{incident.workOrder.status}</span>
-                      <span className="text-xs text-slate-500">SLA {incident.workOrder.slaHours}h · {incident.workOrder.priority}</span>
+                {(dashboard?.recentIncidents || []).filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).slice(0, 3).map((incident) => {
+                  const wo = incident.workOrder;
+                  let assignmentLabel = "Awaiting worker assignment";
+                  if (wo.status === "PENDING") assignmentLabel = "Awaiting worker assignment";
+                  else if (wo.status === "ASSIGNED" && wo.worker) assignmentLabel = `Assigned to ${wo.worker.name}`;
+                  else if (wo.status === "IN_PROGRESS" && wo.worker) assignmentLabel = `${wo.worker.name} is working`;
+                  else if (wo.status === "COMPLETED" && wo.worker) assignmentLabel = `Completed by ${wo.worker.name}`;
+                  else if (wo.worker) assignmentLabel = `${wo.worker.name} · ${wo.status}`;
+                  return (
+                    <div key={wo.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3 transition hover:border-slate-700">
+                      <p className="truncate text-sm font-medium text-white">{incident.issue || incident.description}</p>
+                      <p className="truncate text-xs text-slate-400">{wo.priority} · {incident.location} {incident.asset?.assetCode ? `· ${incident.asset.assetCode}` : ""}</p>
+                      <p className={`mt-1 text-xs font-medium ${wo.status === "PENDING" ? "text-amber-400" : wo.status === "IN_PROGRESS" ? "text-blue-300" : "text-emerald-300"}`}>{assignmentLabel}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className={`rounded-full border px-1.5 py-0.5 text-xs ${wo.status === "IN_PROGRESS" ? "border-blue-900 bg-blue-950 text-blue-300" : wo.status === "ASSIGNED" ? "border-sky-900 bg-sky-950 text-sky-300" : "border-amber-900 bg-amber-950 text-amber-300"}`}>Status: {wo.status}</span>
+                        <span className="text-xs text-slate-500">SLA {wo.slaHours}h</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {(!dashboard || (dashboard.recentIncidents || []).filter((i) => i.workOrder && ["PENDING","ASSIGNED","IN_PROGRESS"].includes(i.workOrder.status)).length === 0) && (
                   <p className="py-4 text-center text-xs text-slate-500">No active work orders.</p>
                 )}

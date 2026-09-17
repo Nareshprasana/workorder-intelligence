@@ -24,7 +24,13 @@ export async function GET(request) {
       take: limit,
       include: {
         worker: { select: { id: true, name: true, location: true, status: true } },
-        incident: { select: { id: true, description: true, location: true, category: true, issue: true, severity: true } },
+        incident: {
+          include: {
+            client: { select: { id: true, name: true } },
+            property: { select: { id: true, name: true, propertyCode: true, address: true } },
+            asset: { select: { id: true, assetCode: true, name: true, location: true } },
+          },
+        },
       },
     });
 

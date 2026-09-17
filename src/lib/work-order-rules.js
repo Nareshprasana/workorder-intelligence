@@ -47,10 +47,21 @@ export function findEligibleWorker(workers, incident, excludeWorkerId = null) {
   return eligible[0];
 }
 
-export function buildNotificationMessage({ priority, location, issue, recommendedAction }) {
+export function buildNotificationMessage({ priority, location, issue }) {
   const prio = priority ? String(priority).toLowerCase() : "medium";
+  const capPrio = prio.charAt(0).toUpperCase() + prio.slice(1);
   const loc = location || "assigned location";
   const iss = issue || "maintenance issue";
-  const action = recommendedAction ? ` ${recommendedAction}` : "";
-  return `${prio.charAt(0).toUpperCase() + prio.slice(1)} priority ${iss} work order assigned in ${loc}.${action}`.trim();
+  return `${capPrio} priority ${iss} work order assigned at ${loc}.`;
+}
+
+export function assignmentStatusLabel(workOrder) {
+  if (!workOrder) return "Unknown";
+  if (workOrder.status === "PENDING") return "Awaiting worker assignment";
+  if (workOrder.status === "ASSIGNED" && workOrder.worker) return `Assigned to ${workOrder.worker.name}`;
+  if (workOrder.status === "IN_PROGRESS" && workOrder.worker) return `${workOrder.worker.name} is working`;
+  if (workOrder.status === "COMPLETED" && workOrder.worker) return `Completed by ${workOrder.worker.name}`;
+  if (workOrder.status === "COMPLETED") return "Completed";
+  if (workOrder.worker) return `${workOrder.worker.name} · ${workOrder.status}`;
+  return "Awaiting worker assignment";
 }

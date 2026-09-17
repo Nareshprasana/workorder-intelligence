@@ -75,14 +75,13 @@ export async function POST(request, { params }) {
         priority,
         location: incident.location,
         issue: incident.issue,
-        recommendedAction: incident.recommendedAction,
       });
 
       notification = await prisma.notification.create({
         data: {
           workerId: eligibleWorker.id,
           workOrderId: workOrder.id,
-          title: "New Maintenance Work Order",
+          title: "New Work Order Assigned",
           message,
           status: "UNREAD",
         },

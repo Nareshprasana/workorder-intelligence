@@ -18,7 +18,8 @@ const titleMap = {
 
 function getTitle(pathname) {
   if (titleMap[pathname]) return titleMap[pathname];
-  if (pathname.startsWith("/workers/")) return "Worker Detail";
+  if (pathname.startsWith("/workers/") && pathname.includes("/jobs/")) return "Job Detail";
+  if (pathname.startsWith("/workers/")) return "Worker Dashboard";
   if (pathname.startsWith("/incidents/")) return "Incident Detail";
   if (pathname.startsWith("/work-orders/")) return "Work Order Detail";
   return "Dashboard";

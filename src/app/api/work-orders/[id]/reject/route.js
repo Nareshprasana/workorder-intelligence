@@ -14,6 +14,13 @@ const prisma = new PrismaClient({ adapter });
 export async function POST(request, { params }) {
   try {
     const { id } = await params;
+    let body = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+    const callerWorkerId = body.workerId ? String(body.workerId).trim() : null;
 
     const workOrder = await prisma.workOrder.findUnique({
       where: { id },
@@ -28,6 +35,10 @@ export async function POST(request, { params }) {
       return Response.json({ error: "Work order is not assigned." }, { status: 400 });
     }
 
+    if (callerWorkerId && workOrder.workerId !== callerWorkerId) {
+      return Response.json({ error: "You are not authorized to reject this work order." }, { status: 403 });
+    }
+
     if (!["ASSIGNED", "PENDING"].includes(workOrder.status)) {
       return Response.json(
         { error: `Cannot reject work order in status ${workOrder.status}` },
@@ -37,7 +48,6 @@ export async function POST(request, { params }) {
 
     const rejectingWorkerId = workOrder.workerId;
 
-    // Fetch all workers to find next eligible excluding rejecting worker
     const workers = await prisma.worker.findMany();
     const incident = workOrder.incident;
 
@@ -68,14 +78,12 @@ export async function POST(request, { params }) {
         data: {
           workerId: nextWorker.id,
           workOrderId: workOrder.id,
-          title: "New Maintenance Work Order",
+          title: "New Work Order Assigned",
           message: `Reassigned: ${message}`,
           status: "UNREAD",
         },
       });
 
-      // Optionally set rejecting worker back to AVAILABLE if they were BUSY
-      // Keep as is unless they were marked BUSY earlier; for simplicity ensure AVAILABLE
       await prisma.worker.update({
         where: { id: rejectingWorkerId },
         data: { status: "AVAILABLE" },
