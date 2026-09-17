@@ -38,7 +38,7 @@ export async function POST(request, { params }) {
       return Response.json({ success: true, status: "ANALYZING", incident, message: "Analysis already in progress." });
     }
 
-    if ((incident.status === "READY" || incident.status === "NEEDS_INFORMATION") && !isRetry) {
+    if (incident.status === "READY" && !isRetry) {
       return Response.json({ success: true, status: incident.status, incident, message: "Analysis already completed." });
     }
 
@@ -76,7 +76,7 @@ export async function POST(request, { params }) {
         confidence: analysis.confidence,
         recommendedAction: analysis.recommendedAction,
         aiAnalysis: JSON.stringify(analysis),
-        status: analysis.missingInformation.length > 0 ? "NEEDS_INFORMATION" : "READY",
+        status: "READY",
       },
       include: { resident: true, client: true, property: true, workOrder: true },
     });

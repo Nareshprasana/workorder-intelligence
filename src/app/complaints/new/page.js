@@ -211,7 +211,8 @@ function NewComplaintForm() {
                   <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Issue</p><p className="font-medium text-white">{aiResult.issue || "—"}</p></div>
                 </div>
                 <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Recommended action</p><p className="mt-1 text-sm text-white">{aiResult.recommendedAction || "—"}</p></div>
-                <p className="mt-2 text-xs text-slate-500">Work request will be created automatically and assigned to an appropriate worker.</p>
+                {missingInfo.length > 0 && <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p><ul className="mt-1 list-disc pl-5 text-sm text-slate-300">{missingInfo.map((m,i)=>(<li key={i} className="text-xs">- {m}</li>))}</ul><p className="mt-2 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p></div>}
+                <p className="mt-2 text-xs text-slate-500">Work request has been created automatically and assigned to an appropriate worker.</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link href={`/complaints/${submittedIncident.id}`} className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200 shadow-[0_3px_0_0_rgb(15_23_42)]">View Complaint</Link>
                   <button onClick={resetForm} className="rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-300 hover:bg-slate-800">Submit Another</button>
@@ -220,17 +221,13 @@ function NewComplaintForm() {
             </Reveal>
           )}
 
-          {aiStatus === "NEEDS_INFORMATION" && aiResult && (
+          {(aiStatus === "NEEDS_INFORMATION" && aiResult) && (
             <Reveal>
-              <div className="rounded-xl border border-amber-900/50 bg-amber-950/10 p-6">
-                <div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white text-xs">⚠</span><p className="text-sm font-semibold text-amber-300">More Information Required</p><span className="ml-auto rounded-full border border-amber-900 bg-amber-950 px-2 py-0.5 text-xs text-amber-300">NEEDS_INFORMATION</span></div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
-                  <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Category</p><p className="font-medium text-white">{aiResult.category}</p></div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Confidence</p><p className="font-medium text-white">{aiResult.confidence ? `${Math.round(aiResult.confidence * 100)}%` : "—"}</p></div>
-                </div>
-                {missingInfo.length > 0 && <div className="mt-3 rounded-lg border border-amber-900/50 bg-slate-950 p-3"><p className="text-xs font-medium text-amber-300">Missing information:</p><ul className="mt-1 list-disc pl-5 text-sm text-slate-300">{missingInfo.map((m,i)=>(<li key={i} className="text-xs">{m}</li>))}</ul></div>}
+              <div className="rounded-xl border border-emerald-900/50 bg-slate-900 p-6 shadow-lg">
+                <div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">✓</span><p className="text-sm font-semibold text-emerald-300">AI Analysis Complete</p><span className="ml-auto rounded-full border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs text-emerald-300">READY</span></div>
+                {missingInfo.length > 0 && <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p><ul className="mt-1 list-disc pl-5 text-sm text-slate-300">{missingInfo.map((m,i)=>(<li key={i} className="text-xs">- {m}</li>))}</ul><p className="mt-2 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p></div>}
+                <p className="mt-2 text-xs text-slate-500">Work request has been created automatically.</p>
                 <div className="mt-4 flex gap-2"><Link href={`/complaints/${submittedIncident.id}`} className="rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-300 hover:bg-slate-800">View Complaint</Link><button onClick={resetForm} className="rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-300 hover:bg-slate-800">Submit Another</button></div>
-                <p className="mt-2 text-xs text-amber-400">More information is required before a work request can be created.</p>
               </div>
             </Reveal>
           )}

@@ -77,7 +77,7 @@ export default function ComplaintDetailPage() {
             <h1 className="mt-1 text-xl font-bold text-white">{incident.issue || incident.description.slice(0, 60)}</h1>
             <p className="text-xs font-mono text-slate-500">{incident.id}</p>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${status === "READY" ? "border-emerald-900 bg-emerald-950 text-emerald-300" : status === "ANALYZING" ? "border-amber-900 bg-amber-950 text-amber-300" : status === "NEEDS_INFORMATION" ? "border-amber-900 bg-amber-950 text-amber-300" : "border-slate-700 bg-slate-800 text-slate-300"}`}>{status}</span>
+          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${status === "READY" || status === "NEEDS_INFORMATION" ? "border-emerald-900 bg-emerald-950 text-emerald-300" : status === "ANALYZING" ? "border-amber-900 bg-amber-950 text-amber-300" : "border-slate-700 bg-slate-800 text-slate-300"}`}>{status === "NEEDS_INFORMATION" ? "READY (legacy)" : status}</span>
         </div>
       </Reveal>
 
@@ -118,7 +118,7 @@ export default function ComplaintDetailPage() {
                 <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Issue</p><p className="text-sm font-medium text-white">{incident.issue || "—"}</p></div>
               </div>
               <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs text-slate-500">Recommended Action</p><p className="text-sm text-white">{incident.recommendedAction || "—"}</p></div>
-              {analysis?.missingInformation?.length > 0 && <div className="rounded-lg border border-amber-900/50 bg-amber-950/10 p-3"><p className="text-xs font-medium text-amber-300">Missing information</p><ul className="mt-1 list-disc pl-5 text-xs text-slate-300">{analysis.missingInformation.map((m,i)=>(<li key={i}>{m}</li>))}</ul></div>}
+              {analysis?.missingInformation?.length > 0 && <div className="rounded-lg border border-slate-800 bg-slate-950 p-3"><p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p><ul className="mt-1 list-disc pl-5 text-xs text-slate-300">{analysis.missingInformation.map((m,i)=>(<li key={i}>- {m}</li>))}</ul><p className="mt-2 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p></div>}
             </div>
           )}
         </div>
@@ -134,7 +134,7 @@ export default function ComplaintDetailPage() {
               <p className="mt-1 text-xs font-medium text-sky-300">{incident.workOrder.status === "PENDING" ? "Awaiting worker assignment" : incident.workOrder.worker ? `Assigned to ${incident.workOrder.worker.name}` : "—"}</p>
               {incident.workOrder.worker && <Link href={`/workers/${incident.workOrder.worker.id}`} className="mt-2 inline-block rounded-lg border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300 hover:bg-slate-800">View Worker →</Link>}
             </div>
-          ) : status === "READY" ? <div><p className="text-xs text-slate-500">Ready — work request should have been created automatically.</p><button onClick={handleCreate} disabled={creating} className="mt-3 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200 disabled:opacity-50">{creating ? "Creating..." : "Create Work Request"}</button>{createMsg && <p className="mt-2 text-xs text-slate-300">{createMsg}</p>}</div> : status === "NEEDS_INFORMATION" ? <p className="text-xs rounded-lg border border-amber-900/50 bg-amber-950/20 p-3 text-amber-300">More information required before work request.</p> : <p className="text-xs text-slate-500">Awaiting AI — work request unavailable.</p>}
+          ) : status === "READY" || status === "NEEDS_INFORMATION" ? <div><p className="text-xs text-slate-500">Ready — work request should have been created automatically.</p><button onClick={handleCreate} disabled={creating} className="mt-3 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200 disabled:opacity-50">{creating ? "Creating..." : "Create Work Request"}</button>{createMsg && <p className="mt-2 text-xs text-slate-300">{createMsg}</p>}</div> : <p className="text-xs text-slate-500">Awaiting AI — work request unavailable.</p>}
         </div>
       </Reveal>
     </div>

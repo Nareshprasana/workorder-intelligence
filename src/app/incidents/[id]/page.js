@@ -124,12 +124,12 @@ export default function IncidentDetailPage() {
   const hasWO = !!incident.workOrder;
   const worker = incident.workOrder?.worker;
 
-  // Timeline states
+  // Timeline states — workflow is NEW→ANALYZING→READY always, even if missingInformation exists (non-blocking)
   const complaintDone = true;
-  const aiDone = ["READY", "NEEDS_INFORMATION", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(status);
+  const aiDone = ["READY", "NEEDS_INFORMATION", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(status); // NEEDS_INFORMATION kept for legacy
   const aiActive = status === "ANALYZING" || status === "NEW";
-  const validationDone = ["READY", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(status);
-  const validationNeeds = status === "NEEDS_INFORMATION";
+  const validationDone = ["READY", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "NEEDS_INFORMATION"].includes(status); // legacy included
+  const validationNeeds = false; // never block — missing info stored in aiAnalysis and shown as worker note
   const woDone = !!hasWO;
   const workerDone = !!worker;
   const completedDone = status === "COMPLETED" || incident.workOrder?.status === "COMPLETED";
@@ -144,7 +144,7 @@ export default function IncidentDetailPage() {
             <h1 className="mt-1 text-xl font-bold text-white">{incident.issue || incident.description.slice(0, 60)}</h1>
             <p className="text-xs font-mono text-slate-500">Incident {incident.id}</p>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${status === "READY" ? "border-emerald-900 bg-emerald-950 text-emerald-300" : status === "ANALYZING" ? "border-amber-900 bg-amber-950 text-amber-300" : status === "NEEDS_INFORMATION" ? "border-amber-900 bg-amber-950 text-amber-300" : status === "NEW" ? "border-slate-700 bg-slate-800 text-slate-300" : "border-slate-700 bg-slate-800 text-slate-300"}`}>{status}</span>
+          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${status === "READY" || status === "NEEDS_INFORMATION" ? "border-emerald-900 bg-emerald-950 text-emerald-300" : status === "ANALYZING" ? "border-amber-900 bg-amber-950 text-amber-300" : status === "NEW" ? "border-slate-700 bg-slate-800 text-slate-300" : "border-slate-700 bg-slate-800 text-slate-300"}`}>{status === "NEEDS_INFORMATION" ? "READY (legacy)" : status}</span>
         </div>
       </Reveal>
 
@@ -163,8 +163,8 @@ export default function IncidentDetailPage() {
               />
               <Step
                 title="Validation"
-                desc={validationDone ? "Information sufficient — READY" : validationNeeds ? "Needs more information" : "Pending validation"}
-                state={validationDone ? "done" : validationNeeds ? "active" : "pending"}
+                desc={validationDone ? "Information sufficient — READY (missing info stored as worker note, not blocking)" : "Pending validation — will go READY even if info is missing"}
+                state={validationDone ? "done" : "pending"}
               />
               <Step title="Work Order" desc={woDone ? `${incident.workOrder.status} · SLA ${incident.workOrder.slaHours}h · Priority ${incident.workOrder.priority}` : "Not yet created"} state={woDone ? "done" : "pending"} />
               <Step title="Worker" desc={workerDone ? `${worker.name} · ${worker.status} · ${incident.workOrder.status === "IN_PROGRESS" ? "is working" : incident.workOrder.status}` : hasWO && incident.workOrder.status === "PENDING" ? "Awaiting worker assignment" : "Not assigned"} state={workerDone ? "done" : hasWO && incident.workOrder.status === "PENDING" ? "active" : "pending"} />
@@ -242,13 +242,14 @@ export default function IncidentDetailPage() {
                 <p className="text-sm text-white">{incident.recommendedAction || analysis?.recommendedAction || "—"}</p>
               </div>
               {analysis?.missingInformation?.length > 0 && (
-                <div className="rounded-lg border border-amber-900/50 bg-amber-950/10 p-3">
-                  <p className="text-xs font-medium text-amber-300">Missing information</p>
+                <div className="rounded-lg border border-slate-800 bg-slate-950 p-3">
+                  <p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p>
                   <ul className="mt-1 list-disc pl-5 text-xs text-slate-300">
                     {analysis.missingInformation.map((m, i) => (
-                      <li key={i}>{m}</li>
+                      <li key={i}>- {m}</li>
                     ))}
                   </ul>
+                  <p className="mt-2 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p>
                 </div>
               )}
               {incident.aiAnalysis && (
@@ -286,22 +287,31 @@ export default function IncidentDetailPage() {
             </div>
           ) : (
             <div className="mt-3">
-              {status === "READY" ? (
+              {status === "READY" || status === "NEEDS_INFORMATION" ? (
                 <div>
-                  <p className="text-xs text-slate-500">AI analysis complete — ready for work order (deterministic rules apply).</p>
+                  <p className="text-xs text-slate-500">AI analysis complete — ready for work order (deterministic rules apply).{status === "NEEDS_INFORMATION" ? " Legacy status treated as READY — work request not blocked." : ""}</p>
+                  {analysis?.missingInformation?.length > 0 && (
+                    <div className="mt-2 rounded-lg border border-slate-800 bg-slate-950 p-3">
+                      <p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p>
+                      <ul className="mt-1 list-disc pl-5 text-xs text-slate-300">
+                        {analysis.missingInformation.map((m, i) => (
+                          <li key={i}>- {m}</li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p>
+                    </div>
+                  )}
                   <button onClick={handleCreateWorkOrder} disabled={creating} className="mt-3 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200 disabled:opacity-50 shadow-[0_3px_0_0_rgb(15_23_42)]">
                     {creating ? "Creating..." : "Create Work Order"}
                   </button>
                   {createMsg && <p className="mt-2 text-xs text-slate-300">{createMsg}</p>}
                 </div>
-              ) : status === "NEEDS_INFORMATION" ? (
-                <p className="text-xs rounded-lg border border-amber-900/50 bg-amber-950/20 p-3 text-amber-300">More information is required before a work order can be created.</p>
               ) : status === "ANALYZING" ? (
                 <p className="text-xs text-slate-500">AI analyzing — work order unavailable until READY.</p>
               ) : (
                 <p className="text-xs text-slate-500">Work order creation unavailable in current state: {status}</p>
               )}
-              {createMsg && status !== "READY" && <p className="mt-2 text-xs text-red-300">{createMsg}</p>}
+              {createMsg && status !== "READY" && status !== "NEEDS_INFORMATION" && <p className="mt-2 text-xs text-red-300">{createMsg}</p>}
             </div>
           )}
         </div>

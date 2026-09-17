@@ -91,6 +91,13 @@ export default function JobDetailPage() {
   const wo = data.workOrder;
   const worker = data.worker;
   const inc = wo.incident;
+  let analysis = null;
+  let missingInformation = [];
+  try {
+    const raw = inc?.aiAnalysis || null;
+    analysis = raw ? JSON.parse(raw) : null;
+    missingInformation = analysis?.missingInformation || [];
+  } catch { missingInformation = []; }
 
   return (
     <div className="space-y-6">
@@ -144,6 +151,17 @@ export default function JobDetailPage() {
                   <p className="text-xs font-semibold text-sky-300">AI Recommended Action</p>
                   <p className="mt-1 text-sm text-white">{wo.action}</p>
                 </div>
+                {missingInformation.length > 0 && (
+                  <div className="sm:col-span-2 rounded-lg border border-slate-800 bg-slate-950 p-3">
+                    <p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p>
+                    <ul className="mt-1 list-disc pl-5 text-xs text-slate-300">
+                      {missingInformation.map((m, i) => (
+                        <li key={i}>- {m}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p>
+                  </div>
+                )}
                 <div><p className="text-xs text-slate-500">Current Work Order Status</p><p className="mt-1"><Badge tone={wo.status === "COMPLETED" ? "emerald" : wo.status === "IN_PROGRESS" ? "blue" : "sky"}>{wo.status}</Badge></p></div>
                 <div><p className="text-xs text-slate-500">Assigned time</p><p className="text-white text-xs">{wo.assignedAt ? new Date(wo.assignedAt).toLocaleString() : "—"}</p></div>
                 <div><p className="text-xs text-slate-500">Started</p><p className="text-white text-xs">{wo.startedAt ? new Date(wo.startedAt).toLocaleString() : "—"}</p></div>

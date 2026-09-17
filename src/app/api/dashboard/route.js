@@ -84,7 +84,7 @@ export async function GET(request) {
     const statusCounts = {
       NEW: 0,
       ANALYZING: 0,
-      NEEDS_INFORMATION: 0,
+      NEEDS_INFORMATION: 0, // kept for backward compat — no longer set, workflow is NEW→ANALYZING→READY (non-blocking)
       READY: 0,
       ASSIGNED: 0,
       IN_PROGRESS: 0,

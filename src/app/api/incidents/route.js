@@ -19,6 +19,7 @@ export async function GET(request) {
     const category = searchParams.get("category");
 
     const where = {};
+    // NEEDS_INFORMATION kept for backward compat filter; new flow always sets READY (missing info is non-blocking worker note)
     if (status && ["NEW","ANALYZING","NEEDS_INFORMATION","READY","ASSIGNED","IN_PROGRESS","COMPLETED","REJECTED"].includes(status)) {
       where.status = status;
     }

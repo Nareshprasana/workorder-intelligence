@@ -11,7 +11,7 @@ function StatusBadge({ status }) {
   const styles = {
     NEW: "bg-slate-800 text-slate-300 border-slate-700",
     ANALYZING: "bg-amber-950 text-amber-300 border-amber-900",
-    NEEDS_INFORMATION: "bg-amber-950 text-amber-300 border-amber-900",
+    NEEDS_INFORMATION: "bg-emerald-950 text-emerald-300 border-emerald-900", // legacy — now rendered as READY non-blocking
     READY: "bg-emerald-950 text-emerald-300 border-emerald-900",
     ASSIGNED: "bg-blue-950 text-blue-300 border-blue-900",
     IN_PROGRESS: "bg-blue-950 text-blue-300 border-blue-900",
@@ -19,7 +19,8 @@ function StatusBadge({ status }) {
     REJECTED: "bg-red-950 text-red-300 border-red-900",
   };
   const cls = styles[status] || "bg-slate-800 text-slate-300 border-slate-700";
-  return <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
+  const label = status === "NEEDS_INFORMATION" ? "READY (legacy)" : status;
+  return <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
 }
 function SeverityBadge({ severity }) {
   const styles = {
@@ -146,7 +147,7 @@ export default function OverviewPage() {
               {[
                 { label: "NEW", count: incidentCounts.NEW || 0, color: "slate" },
                 { label: "ANALYZING", count: incidentCounts.ANALYZING || 0, color: "amber" },
-                { label: "NEEDS INFORMATION", count: incidentCounts.NEEDS_INFORMATION || 0, color: "amber" },
+                { label: "NEEDS INFORMATION (legacy · non-blocking)", count: incidentCounts.NEEDS_INFORMATION || 0, color: "slate" },
                 { label: "READY", count: incidentCounts.READY || 0, color: "emerald" },
                 { label: "ASSIGNED", count: incidentCounts.ASSIGNED || 0, color: "blue" },
                 { label: "IN PROGRESS", count: incidentCounts.IN_PROGRESS || 0, color: "blue" },
@@ -318,16 +319,22 @@ export default function OverviewPage() {
               <div className="mt-4 space-y-3">
                 {recentIncidents.slice(0, 4).map((inc) => {
                   const isAnalyzing = inc.status === "ANALYZING";
+                  const isReady = inc.status === "READY" || inc.status === "NEEDS_INFORMATION";
+                  let missingNote = null;
+                  try {
+                    const parsed = inc.aiAnalysis ? JSON.parse(inc.aiAnalysis) : null;
+                    if (parsed?.missingInformation?.length > 0) missingNote = parsed.missingInformation.join(", ");
+                  } catch {}
                   return (
                     <div key={`ai-${inc.id}`} className="flex gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
-                      <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${isAnalyzing ? "bg-amber-500 relative" : inc.status === "READY" ? "bg-emerald-500" : inc.status === "NEEDS_INFORMATION" ? "bg-amber-500" : inc.severity === "CRITICAL" ? "bg-red-500" : "bg-sky-500"}`}>
+                      <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${isAnalyzing ? "bg-amber-500 relative" : isReady ? "bg-emerald-500" : inc.severity === "CRITICAL" ? "bg-red-500" : "bg-sky-500"}`}>
                         {isAnalyzing && <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-amber-400 opacity-75"></span>}
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-slate-200 truncate">
-                          {isAnalyzing ? "AI analyzing..." : inc.status === "READY" ? "AI analysis complete — ready" : inc.status === "NEEDS_INFORMATION" ? "AI needs more information" : "Complaint analyzed"}
+                          {isAnalyzing ? "AI analyzing..." : isReady ? "AI analysis complete — ready" : "Complaint analyzed"}
                         </p>
-                        <p className="truncate text-xs text-slate-500">{isAnalyzing ? "Analyzing complaint..." : `${inc.issue || inc.category} · ${inc.confidence ? `${Math.round(inc.confidence*100)}% confidence` : "analyzed"}`}</p>
+                        <p className="truncate text-xs text-slate-500">{isAnalyzing ? "Analyzing complaint..." : `${inc.issue || inc.category} · ${inc.confidence ? `${Math.round(inc.confidence*100)}% confidence` : "analyzed"}${missingNote ? ` · AI noted additional info: ${missingNote} — worker will investigate` : ""}`}</p>
                       </div>
                     </div>
                   );

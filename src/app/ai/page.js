@@ -19,8 +19,11 @@ export default function AIPage() {
   }, []);
 
   const analyzing = incidents.filter((i) => i.status === "ANALYZING");
+  // NEEDS_INFORMATION is legacy — kept for backward compat, not blocking. New flow is NEW→ANALYZING→READY always.
   const needsInfo = incidents.filter((i) => i.status === "NEEDS_INFORMATION");
   const ready = incidents.filter((i) => i.status === "READY");
+  // Ready includes legacy NEEDS_INFORMATION for display as non-blocking ready
+  const readyDisplay = [...ready, ...needsInfo];
   const completed = incidents.filter((i) => ["ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(i.status));
   const analyzed = incidents.filter((i) => i.aiAnalysis || i.category);
 
@@ -42,17 +45,17 @@ export default function AIPage() {
           </div>
         </Reveal>
         <Reveal delay={60}>
-          <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-5">
-            <p className="text-xs text-amber-300/80">Needs Information</p>
-            <p className="mt-1 text-2xl font-bold text-amber-400">{loading ? "—" : needsInfo.length}</p>
-            <p className="text-xs text-slate-500">⚠ Missing fields</p>
+          <div className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+            <p className="text-xs text-slate-400">Needs Information (legacy)</p>
+            <p className="mt-1 text-2xl font-bold text-slate-300">{loading ? "—" : needsInfo.length}</p>
+            <p className="text-xs text-slate-500">Legacy · non-blocking · worker will investigate</p>
           </div>
         </Reveal>
         <Reveal delay={120}>
           <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-5">
             <p className="text-xs text-emerald-300/80">Ready</p>
-            <p className="mt-1 text-2xl font-bold text-emerald-400">{loading ? "—" : ready.length}</p>
-            <p className="text-xs text-slate-500">Ready for work order</p>
+            <p className="mt-1 text-2xl font-bold text-emerald-400">{loading ? "—" : readyDisplay.length}</p>
+            <p className="text-xs text-slate-500">Ready for work order · missing info as worker note</p>
           </div>
         </Reveal>
         <Reveal delay={180}>
@@ -99,16 +102,16 @@ export default function AIPage() {
         </div>
       </Reveal>
 
-      {/* Needs Information */}
+      {/* Needs Information — legacy non-blocking */}
       <Reveal>
-        <div className="rounded-xl border border-amber-900/30 bg-slate-900 p-6">
-          <h2 className="text-sm font-semibold text-white">Needs Information</h2>
-          <p className="text-xs text-slate-500">AI knows when it does not have enough information</p>
+        <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <h2 className="text-sm font-semibold text-white">Needs Information <span className="text-xs font-normal text-slate-500">(legacy — not blocking)</span></h2>
+          <p className="text-xs text-slate-500">Legacy status — AI stored missing fields in aiAnalysis; work request is still created — worker will investigate on site.</p>
           <div className="mt-4 space-y-3">
             {loading ? (
               <p className="py-6 text-center text-sm text-slate-500">Loading...</p>
             ) : needsInfo.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-500">No incidents need information.</p>
+              <p className="py-6 text-center text-sm text-slate-500">No legacy incidents need information (new flow always READY).</p>
             ) : (
               needsInfo.map((inc) => {
                 let missing = [];
@@ -117,13 +120,19 @@ export default function AIPage() {
                   missing = parsed?.missingInformation || [];
                 } catch {}
                 return (
-                  <Link key={inc.id} href={`/incidents/${inc.id}`} className="block rounded-lg border border-amber-900/40 bg-slate-950 p-4 hover:border-amber-800/50 transition">
+                  <Link key={inc.id} href={`/incidents/${inc.id}`} className="block rounded-lg border border-slate-700 bg-slate-950 p-4 hover:border-slate-600 transition">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium text-white">{inc.issue || inc.description.slice(0, 60)}</p>
-                      <span className="rounded-full border border-amber-900 bg-amber-950 px-2 py-0.5 text-xs text-amber-300">NEEDS INFORMATION</span>
+                      <span className="rounded-full border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs text-emerald-300">READY ✓ (legacy)</span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">{inc.category} · {inc.severity} · {inc.confidence ? `${Math.round(inc.confidence * 100)}%` : ""}</p>
-                    {missing.length > 0 && <p className="mt-1 text-xs text-amber-400">Missing: {missing.join(", ")}</p>}
+                    {missing.length > 0 && (
+                      <div className="mt-2 rounded border border-slate-800 bg-slate-900 p-2">
+                        <p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p>
+                        <ul className="list-disc pl-5 text-xs text-slate-300">{missing.map((m,i)=>(<li key={i}>- {m}</li>))}</ul>
+                        <p className="mt-1 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p>
+                      </div>
+                    )}
                   </Link>
                 );
               })
@@ -132,27 +141,41 @@ export default function AIPage() {
         </div>
       </Reveal>
 
-      {/* Ready */}
+      {/* Ready — includes legacy non-blocking notes */}
       <Reveal>
         <div className="rounded-xl border border-emerald-900/30 bg-slate-900 p-6">
           <h2 className="text-sm font-semibold text-white">Ready</h2>
-          <p className="text-xs text-slate-500">AI analysis complete — ready for work order (deterministic rules)</p>
+          <p className="text-xs text-slate-500">AI analysis complete — ready for work order (deterministic rules) · missing info shown as worker note, not blocking</p>
           <div className="mt-4 space-y-3">
             {loading ? (
               <p className="py-6 text-center text-sm text-slate-500">Loading...</p>
-            ) : ready.length === 0 ? (
+            ) : readyDisplay.length === 0 ? (
               <p className="py-6 text-center text-sm text-slate-500">No ready incidents.</p>
             ) : (
-              ready.map((inc) => (
-                <Link key={inc.id} href={`/incidents/${inc.id}`} className="block rounded-lg border border-emerald-900/40 bg-slate-950 p-4 hover:border-emerald-800/50 transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-white">{inc.issue || inc.description.slice(0, 60)}</p>
-                    <span className="rounded-full border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs text-emerald-300">READY ✓</span>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-500">{inc.category} · {inc.severity} · {inc.confidence ? `${Math.round(inc.confidence * 100)}%` : ""}</p>
-                  <p className="mt-1 text-xs text-slate-300">{inc.recommendedAction || "—"}</p>
-                </Link>
-              ))
+              readyDisplay.map((inc) => {
+                let missing = [];
+                try {
+                  const parsed = inc.aiAnalysis ? JSON.parse(inc.aiAnalysis) : null;
+                  missing = parsed?.missingInformation || [];
+                } catch {}
+                return (
+                  <Link key={inc.id} href={`/incidents/${inc.id}`} className="block rounded-lg border border-emerald-900/40 bg-slate-950 p-4 hover:border-emerald-800/50 transition">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-white">{inc.issue || inc.description.slice(0, 60)}</p>
+                      <span className="rounded-full border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs text-emerald-300">READY ✓</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">{inc.category} · {inc.severity} · {inc.confidence ? `${Math.round(inc.confidence * 100)}%` : ""}</p>
+                    <p className="mt-1 text-xs text-slate-300">{inc.recommendedAction || "—"}</p>
+                    {missing.length > 0 && (
+                      <div className="mt-2 rounded border border-slate-800 bg-slate-900 p-2">
+                        <p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p>
+                        <ul className="list-disc pl-5 text-xs text-slate-300">{missing.map((m,i)=>(<li key={i}>- {m}</li>))}</ul>
+                        <p className="mt-1 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p>
+                      </div>
+                    )}
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>
@@ -182,7 +205,13 @@ export default function AIPage() {
                     </div>
                     <p className="mt-1 text-xs text-slate-500">{inc.location} · {inc.confidence ? `${Math.round(inc.confidence * 100)}% confidence` : ""}</p>
                     <p className="mt-2 text-xs text-slate-300"><span className="text-slate-500">Recommendation:</span> {inc.recommendedAction || "—"}</p>
-                    {analysis?.missingInformation?.length > 0 && <p className="mt-1 text-xs text-amber-400">Missing: {analysis.missingInformation.join(", ")}</p>}
+                    {analysis?.missingInformation?.length > 0 && (
+                      <div className="mt-2 rounded border border-slate-800 bg-slate-900 p-2">
+                        <p className="text-xs font-medium text-amber-300">AI noted that additional information may be needed:</p>
+                        <ul className="list-disc pl-5 text-xs text-slate-300">{analysis.missingInformation.map((m,i)=>(<li key={i}>- {m}</li>))}</ul>
+                        <p className="mt-1 text-xs text-slate-500">Work request has been created — worker will investigate on site.</p>
+                      </div>
+                    )}
                     <Link href={`/incidents/${inc.id}`} className="mt-2 inline-block text-xs text-sky-400 hover:text-sky-300">View detail →</Link>
                   </div>
                 );

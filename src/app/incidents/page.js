@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Reveal from "../../components/dashboard/Reveal";
 
-const statuses = ["ALL","NEW","ANALYZING","NEEDS_INFORMATION","READY","ASSIGNED","IN_PROGRESS","COMPLETED","REJECTED"];
+// NEEDS_INFORMATION kept in backend filter for backward compat but not shown as primary workflow — new flow is NEW→ANALYZING→READY (non-blocking)
+const statuses = ["ALL","NEW","ANALYZING","READY","ASSIGNED","IN_PROGRESS","COMPLETED","REJECTED"];
 const severities = ["ALL","LOW","MEDIUM","HIGH","CRITICAL"];
 const categories = ["ALL","HVAC","ELECTRICAL","PLUMBING","LIFT","GENERAL"];
 
@@ -33,7 +34,8 @@ function StatusCell({ status }) {
     );
   }
   if (status === "NEEDS_INFORMATION") {
-    return <span className="rounded-full border border-amber-900 bg-amber-950 px-2 py-0.5 text-xs font-medium text-amber-300">NEEDS INFORMATION ⚠</span>;
+    // Legacy status — kept for backward compat, rendered as non-blocking READY (missing info stored in aiAnalysis, worker will investigate on site)
+    return <span className="rounded-full border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-300">READY ✓ <span className="opacity-60">(legacy)</span></span>;
   }
   if (status === "READY") {
     return <span className="rounded-full border border-emerald-900 bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-300">READY ✓</span>;
